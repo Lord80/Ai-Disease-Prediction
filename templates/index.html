@@ -1,0 +1,20 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Disease Prediction</title>
+</head>
+<body>
+    <h2>Select Symptoms</h2>
+    <form method="POST" action="/predict">
+        {% for symptom in symptoms %}
+            <label>
+                <input type="checkbox" name="symptoms" value="{{ symptom }}"> {{ symptom }}
+            </label><br>
+        {% endfor %}
+        <br>
+        <button type="submit">Predict</button>
+    </form>
+</body>
+</html>

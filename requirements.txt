@@ -1,0 +1,7 @@
+flask
+pandas
+numpy
+scikit-learn
+flask-bcrypt
+flask-login
+flask-pymongo
