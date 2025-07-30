@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction History</title>
+</head>
+<body>
+    <h2>Prediction History for {{ session.username }}</h2>
+
+    {% if history %}
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Symptoms</th>
+            <th>Prediction</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for record in history %}
+        <tr>
+            <td>{{ record.symptoms }}</td>
+            <td>{{ record.prediction }}</td>
+            <td>{{ record.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <p>No history found.</p>
+    {% endif %}
+
+    <br><a href="/">Go Back</a>
+</body>
+</html>

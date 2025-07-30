@@ -1,0 +1,98 @@
+<!-- templates/admin_history.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Prediction History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        #searchBox {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #e0e0e0;
+        }
+
+        .center {
+            text-align: center;
+        }
+    </style>
+
+    <script>
+        function filterTable() {
+            var input = document.getElementById("searchBox");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("historyTable");
+            var rows = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < rows.length; i++) {
+                var rowText = rows[i].textContent.toLowerCase();
+                if (rowText.includes(filter)) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1 class="center">Admin - All Prediction History</h1>
+
+    <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="Search by username, symptoms, prediction...">
+
+    {% if history %}
+        <table id="historyTable">
+            <tr>
+                <th>Username</th>
+                <th>Timestamp</th>
+                <th>Symptoms</th>
+                <th>Prediction</th>
+            </tr>
+            {% for row in history %}
+            <tr>
+                <td>{{ row.username }}</td>
+                <td>{{ row.timestamp }}</td>
+                <td>{{ row.symptoms }}</td>
+                <td>{{ row.prediction }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No prediction history found.</p>
+    {% endif %}
+</body>
+</html>

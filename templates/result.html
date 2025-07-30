@@ -1,13 +1,60 @@
 <!-- templates/result.html -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Prediction Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        h2, h3 {
+            color: #2c3e50;
+        }
+        ul {
+            margin-top: 10px;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #2980b9;
+        }
+    </style>
 </head>
 <body>
-    <h2>Predicted Disease:</h2>
-    <p>{{ disease }}</p>
-    <a href="/">Predict Again</a>
+    <div class="container">
+        <h2>🩺 Predicted Disease: <strong>{{ disease }}</strong></h2>
+
+        <h3>Common Symptoms:</h3>
+        {% if symptoms %}
+            <ul>
+                {% for symptom in symptoms %}
+                    <li>{{ symptom }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No symptom information available.</p>
+        {% endif %}
+
+        <a href="/">🔄 Predict Again</a>
+    </div>
 </body>
 </html>
