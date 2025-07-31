@@ -3,19 +3,21 @@ import pickle
 import numpy as np
 import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
-import datetime
+from datetime import datetime
+import mysql.connector
+from mysql.connector import Error
 
 app = Flask(__name__)
 
 app.secret_key = 'your_secret_key_here'  # Change this to something secure
 
-USER_CSV = 'dataset/users.csv'
-HISTORY_CSV = 'dataset/history.csv'
-
-# Ensure user CSV exists
-if not os.path.exists(USER_CSV):
-    pd.DataFrame(columns=['username', 'password']).to_csv(USER_CSV, index=False)
+def get_db_connection():
+    return mysql.connector.connect(
+        host='localhost',
+        user='lord',
+        password='2005',
+        database='disease_prediction'
+    )
 
 # Load model and metadata
 with open('model/disease_model.pkl', 'rb') as f:
@@ -52,22 +54,22 @@ def predict():
 
     disease_symptoms = sorted(disease_symptoms)
 
-    # 🔷 Save prediction history if user is logged in
+    # ⬇️ Insert history into MySQL
     if 'username' in session:
-        history_path = 'dataset/history.csv'
+        username = session['username']
+        symptoms_str = ", ".join(selected_symptoms)
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Ensure the history.csv file exists with correct columns
-        if not os.path.exists(history_path):
-            pd.DataFrame(columns=['username', 'symptoms', 'prediction', 'timestamp']).to_csv(history_path, index=False)
-
-        history_df = pd.read_csv(history_path)
-        history_df.loc[len(history_df)] = [
-            session['username'],
-            ', '.join(selected_symptoms),
-            predicted_disease,
-            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ]
-        history_df.to_csv(history_path, index=False)
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        insert_query = """
+            INSERT INTO history (username, symptoms, prediction, timestamp)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (username, symptoms_str, predicted_disease, timestamp))
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     return render_template('result.html',
                            disease=predicted_disease,
@@ -78,33 +80,30 @@ def view_history():
     if 'username' not in session:
         return redirect('/login')
     
-    history_df = pd.read_csv(HISTORY_CSV)
-    user_history = history_df[history_df['username'] == session['username']]
-    return render_template('history.html', history=user_history.to_dict(orient='records'))
+    username = session['username']
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT symptoms, prediction, timestamp FROM history WHERE username = %s ORDER BY timestamp DESC", (username,))
+    history = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template('history.html', history=history)
 
 @app.route('/admin/history')
 def admin_history():
     if 'username' not in session or session.get('role') != 'admin':
-        return "Access denied. Admins only.", 403
+        return "Access denied", 403
 
-    if not os.path.exists(HISTORY_CSV):
-        return "No history found."
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM history ORDER BY timestamp DESC")
+    records = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-    history_df = pd.read_csv(HISTORY_CSV)
-    history_df = history_df.sort_values(by='timestamp', ascending=False)
-
-    return render_template('admin_history.html', history=history_df.to_dict(orient='records'))
-
-
-
-
-def load_users():
-    return pd.read_csv(USER_CSV)
-
-def save_user(username, hashed_password):
-    df = load_users()
-    df.loc[len(df)] = [username, hashed_password]
-    df.to_csv(USER_CSV, index=False)
+    return render_template('admin_history.html', history=records)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -112,17 +111,20 @@ def register():
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
 
-        users = pd.read_csv(USER_CSV)
-        if username in users['username'].values:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+            conn.commit()
+        except mysql.connector.IntegrityError:
             return "Username already exists."
-
-        # Default role = 'user'
-        new_user = pd.DataFrame([[username, password, 'user']], columns=['username', 'password', 'role'])
-        users = pd.concat([users, new_user], ignore_index=True)
-        users.to_csv(USER_CSV, index=False)
+        finally:
+            cursor.close()
+            conn.close()
 
         return redirect('/login')
     return render_template('register.html')
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -131,12 +133,16 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        users = pd.read_csv(USER_CSV)
-        user = users[users['username'] == username]
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
-        if not user.empty and check_password_hash(user.iloc[0]['password'], password):
-            session['username'] = username
-            session['role'] = user.iloc[0]['role']  # ✅ Save role in session
+        if user and check_password_hash(user['password'], password):
+            session['username'] = user['username']
+            session['role'] = user['role']
             return redirect('/')
         else:
             return "Invalid credentials"
@@ -147,7 +153,6 @@ def login():
 def logout():
     session.pop('username', None)
     return redirect('/')
-
 
 
 if __name__ == '__main__':

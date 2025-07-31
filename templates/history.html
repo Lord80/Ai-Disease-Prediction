@@ -13,11 +13,11 @@
             <th>Prediction</th>
             <th>Timestamp</th>
         </tr>
-        {% for record in history %}
+        {% for row in history %}
         <tr>
-            <td>{{ record.symptoms }}</td>
-            <td>{{ record.prediction }}</td>
-            <td>{{ record.timestamp }}</td>
+            <td>{{ row.symptoms }}</td>
+            <td>{{ row.prediction }}</td>
+            <td>{{ row.timestamp }}</td>
         </tr>
         {% endfor %}
     </table>
