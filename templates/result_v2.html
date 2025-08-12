@@ -1,0 +1,22 @@
+<!-- templates/result_disease.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Result</title>
+</head>
+<body>
+    <h2>Prediction Results</h2>
+<p><b>Outcome:</b> {{ outcome }}</p>
+
+<h3>Top 3 Possible Diseases:</h3>
+<ul>
+{% for disease in top_diseases %}
+    <li>
+        <b>{{ disease.name }}</b> ({{ disease.probability }}% confidence)  
+        <br> Remedy: {{ disease.remedy }}
+    </li>
+{% endfor %}
+</ul>
+</body>
+</html>

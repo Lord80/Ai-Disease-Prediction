@@ -1,5 +1,3 @@
-<!-- templates/index.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,100 +6,57 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 30px;
+            margin: 20px;
             background-color: #f9f9f9;
         }
-        h2 {
-            text-align: center;
-        }
-        .search-box {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #search {
-            width: 60%;
-            padding: 10px;
-            font-size: 16px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .symptom-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            width: 100%;
-            max-width: 1000px;
-            margin-bottom: 20px;
-        }
-        .symptom-item {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .symptom-item label {
-            cursor: pointer;
-        }
-        button {
-            padding: 10px 25px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
+        a, button {
+            display: inline-block;
+            margin: 8px 4px;
+            padding: 10px 15px;
             background-color: #4CAF50;
             color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
             cursor: pointer;
         }
-        button:hover {
+        a:hover, button:hover {
             background-color: #45a049;
+        }
+        select {
+            padding: 5px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+
     {% if username %}
-    <p>Welcome, {{ username }} | <a href="/logout">Logout</a></p>
-{% else %}
-    <p><a href="/login">Login</a> | <a href="/register">Register</a></p>
-{% endif %}
+        <p>Welcome, {{ username }} | <a href="/logout" style="background-color: #f44336;">Logout</a></p>
+    {% else %}
+        <p><a href="/login">Login</a> | <a href="/register">Register</a></p>
+    {% endif %}
 
-{% if session.get('role') == 'admin' %}
-    <a href="/admin/history">Admin Dashboard</a>
-{% endif %}
+    {% if session.get('role') == 'admin' %}
+        <a href="/admin/history">📜 Admin Dashboard (Old Model)</a>
+        <a href="/admin/history_v2">📜 Admin Dashboard (New Model)</a>
+    {% endif %}
 
+    <br>
 
-    <h2>Select Symptoms</h2>
-
-    <div class="search-box">
-        <input type="text" id="search" placeholder="Search symptoms..." onkeyup="filterSymptoms()">
-    </div>
-
-    <form method="POST" action="/predict">
-        <div class="symptom-grid" id="symptomList">
-            {% for symptom in symptoms %}
-                <div class="symptom-item">
-                    <label>
-                        <input type="checkbox" name="symptoms" value="{{ symptom }}"> {{ symptom }}
-                    </label>
-                </div>
-            {% endfor %}
-        </div>
-        <button type="submit">Predict</button>
+    <form action="/predict" method="get" style="display:inline;">
+        <button type="submit">🩺 Use Old Model (Symptoms Only)</button>
     </form>
-<br>
-    <a href="/history">My Prediction History</a>
 
-    <script>
-        function filterSymptoms() {
-            const query = document.getElementById("search").value.toLowerCase();
-            const items = document.getElementsByClassName("symptom-item");
+    <form action="/predict_v2" method="get" style="display:inline;">
+        <button type="submit">🩺 Use New Model (Profile + Symptoms)</button>
+    </form>
 
-            for (let i = 0; i < items.length; i++) {
-                const label = items[i].textContent.toLowerCase();
-                items[i].style.display = label.includes(query) ? "block" : "none";
-            }
-        }
-    </script>
+    {% if username %}
+        <br><br>
+        <a href="/history">📂 View My History (Old Model)</a>
+        <a href="/history_v2">📂 View My History (New Model)</a>
+    {% endif %}
+
 </body>
 </html>

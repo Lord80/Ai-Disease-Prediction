@@ -1,0 +1,62 @@
+<!-- templates/predict_v2.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Disease Prediction V2</title>
+</head>
+<body>
+    <h2>Disease Prediction System - V2</h2>
+    <form method="POST" action="/predict_v2">
+    <!-- Fever -->
+    <select name="fever">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select>
+
+    <!-- Cough -->
+    <select name="cough">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select>
+
+    <!-- Fatigue -->
+    <select name="fatigue">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select>
+
+    <!-- Difficulty Breathing -->
+    <select name="breathing">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select>
+
+    <!-- Age -->
+    <input type="number" name="age" min="0" max="120">
+
+    <!-- Gender -->
+    <select name="gender">
+        <option value="1">Male</option>
+        <option value="0">Female</option>
+    </select>
+
+    <!-- Blood Pressure -->
+    <select name="bp">
+        <option value="1">High</option>
+        <option value="-1">Low</option>
+        <option value="0">Normal</option>
+    </select>
+
+    <!-- Cholesterol Level -->
+    <select name="cholesterol">
+        <option value="1">High</option>
+        <option value="0">Normal</option>
+    </select>
+
+    <button type="submit">Predict</button>
+</form>
+
+</body>
+</html>
