@@ -157,20 +157,22 @@ def predict_v2():
         # Store in MySQL
         conn = get_db_connection()
         cursor = conn.cursor()
+        
         sql = """
             INSERT INTO prediction_history 
-            (fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
-             top_disease_1, probability_1, remedy_1,
-             top_disease_2, probability_2, remedy_2,
-             top_disease_3, probability_3, remedy_3,
-             outcome)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,
+            (username, fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
+            top_disease_1, probability_1, remedy_1,
+            top_disease_2, probability_2, remedy_2,
+            top_disease_3, probability_3, remedy_3,
+            outcome)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,
                     %s,%s,%s,
                     %s,%s,%s,
                     %s,%s,%s,
                     %s)
         """
         cursor.execute(sql, (
+            session['username'],  # 👈 store logged-in user's ID
             fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
             top_diseases[0]['name'], top_diseases[0]['probability'], top_diseases[0]['remedy'],
             top_diseases[1]['name'], top_diseases[1]['probability'], top_diseases[1]['remedy'],
@@ -211,7 +213,7 @@ def view_history():
 
     return render_template('history.html', history=history)
 
-@app.route('/admin/history')
+@app.route('/admin_history')
 def admin_history():
     if 'username' not in session or session.get('role') != 'admin':
         return "Access denied", 403
@@ -235,43 +237,47 @@ def admin_history():
 @app.route('/history_v2')
 def history_v2():
     if 'username' not in session:
-        return redirect('/login')
+        return redirect(url_for('login'))
+
+    username = session['username']
 
     conn = get_db_connection()
-    records = []
-    if conn:
-        try:
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM prediction_history ORDER BY predicted_at DESC")
-            records = cursor.fetchall()
-        except Error as e:
-            print(f"[DB] Failed to fetch history_v2: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+    cursor = conn.cursor(dictionary=True)
 
-    return render_template('history_v2.html', records=records)
+    cursor.execute("""
+        SELECT * FROM prediction_history
+        WHERE username = %s
+        ORDER BY predicted_at DESC
+    """, (username,))
+    
+    history = cursor.fetchall()
+    conn.close()
+
+    return render_template('history_v2.html', history=history)
 
 # ----- Admin history for v2 -----
-@app.route('/admin/history_v2')
+
+
+@app.route('/admin_history_v2')
 def admin_history_v2():
     if 'username' not in session or session.get('role') != 'admin':
-        return redirect('/login')
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
-    records = []
-    if conn:
-        try:
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM prediction_history ORDER BY predicted_at DESC")
-            records = cursor.fetchall()
-        except Error as e:
-            print(f"[DB] Failed to fetch admin history_v2: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+    cursor = conn.cursor(dictionary=True)
 
-    return render_template('admin_history_v2.html', records=records)
+    cursor.execute("""
+        SELECT *
+        FROM prediction_history
+        ORDER BY predicted_at DESC
+    """)
+    
+    history = cursor.fetchall()
+    conn.close()
+
+    return render_template('admin_history_v2.html', history=history)
+
+
 
 # ----- Auth routes -----
 @app.route('/register', methods=['GET', 'POST'])

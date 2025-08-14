@@ -1,57 +1,106 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Prediction History</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="p-4">
-    <h2>Prediction History</h2>
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Fever</th>
-                <th>Cough</th>
-                <th>Fatigue</th>
-                <th>Breathing</th>
-                <th>Age</th>
-                <th>Gender</th>
-                <th>BP</th>
-                <th>Cholesterol</th>
-                <th>Disease</th>
-                <th>Probability (%)</th>
-                <th>Outcome</th>
-                <th>Predicted At</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in records %}
-            <tr>
-                <td>{{ row.id }}</td>
-                <td>{{ row.fever }}</td>
-                <td>{{ row.cough }}</td>
-                <td>{{ row.fatigue }}</td>
-                <td>{{ row.breathing }}</td>
-                <td>{{ row.age }}</td>
-                <td>{{ 'Male' if row.gender == 1 else 'Female' }}</td>
-                <td>
-                    {% if row.bp == 1 %} High
-                    {% elif row.bp == -1 %} Low
-                    {% else %} Normal
-                    {% endif %}
-                </td>
-                <td>
-                    {% if row.cholesterol == 1 %} High
-                    {% else %} Normal
-                    {% endif %}
-                </td>
-                <td>{{ row.predicted_disease }}</td>
-                <td>{{ row.probability }}</td>
-                <td>{{ row.outcome }}</td>
-                <td>{{ row.predicted_at }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+  <head>
+    <title>My Prediction History</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9f9f9;
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        text-align: center;
+        padding: 20px;
+        background: #007bff;
+        color: white;
+      }
+      table {
+        width: 90%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ddd;
+      }
+      th {
+        background: #007bff;
+        color: white;
+      }
+      tr:hover {
+        background: #f1f1f1;
+      }
+      .back-btn {
+        display: block;
+        width: 150px;
+        margin: 20px auto;
+        padding: 10px;
+        text-align: center;
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+      }
+      .back-btn:hover {
+        background: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>My Prediction History</h1>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Fever</th>
+        <th>Cough</th>
+        <th>Fatigue</th>
+        <th>Breathing</th>
+        <th>Age</th>
+        <th>Gender</th>
+        <th>BP</th>
+        <th>Cholesterol</th>
+        <th>Top Disease 1</th>
+        <th>Probability 1</th>
+        <th>Remedy 1</th>
+        <th>Top Disease 2</th>
+        <th>Probability 2</th>
+        <th>Remedy 2</th>
+        <th>Top Disease 3</th>
+        <th>Probability 3</th>
+        <th>Remedy 3</th>
+        <th>Outcome</th>
+        <th>Date</th>
+      </tr>
+      {% for row in history %}
+      <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.fever }}</td>
+        <td>{{ row.cough }}</td>
+        <td>{{ row.fatigue }}</td>
+        <td>{{ row.breathing }}</td>
+        <td>{{ row.age }}</td>
+        <td>{{ 'Male' if row.gender == 1 else 'Female' }}</td>
+        <td>{{ row.bp }}</td>
+        <td>{{ row.cholesterol }}</td>
+        <td>{{ row.top_disease_1 }}</td>
+        <td>{{ row.probability_1 }}%</td>
+        <td>{{ row.remedy_1 }}</td>
+        <td>{{ row.top_disease_2 }}</td>
+        <td>{{ row.probability_2 }}%</td>
+        <td>{{ row.remedy_2 }}</td>
+        <td>{{ row.top_disease_3 }}</td>
+        <td>{{ row.probability_3 }}%</td>
+        <td>{{ row.remedy_3 }}</td>
+        <td>{{ row.outcome }}</td>
+        <td>{{ row.predicted_at }}</td>
+      </tr>
+      {% endfor %}
     </table>
-</body>
+    <a href="/" class="back-btn">Back to Dashboard</a>
+  </body>
 </html>
