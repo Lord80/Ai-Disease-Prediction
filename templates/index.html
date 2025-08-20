@@ -3,60 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <title>AI Disease Prediction</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
-        }
-        a, button {
-            display: inline-block;
-            margin: 8px 4px;
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-        a:hover, button:hover {
-            background-color: #45a049;
-        }
-        select {
-            padding: 5px;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="static/css/style.css"> <!-- External CSS -->
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>🧬 AI Disease Prediction</h1>
+            <p class="tagline">Predict diseases smartly using AI</p>
+        </header>
 
-    {% if username %}
-        <p>Welcome, {{ username }} | <a href="/logout" style="background-color: #f44336;">Logout</a></p>
-    {% else %}
-        <p><a href="/login">Login</a> | <a href="/register">Register</a></p>
-    {% endif %}
+        <nav>
+            {% if username %}
+                <p class="welcome">Welcome, <b>{{ username }}</b> | 
+                    <a href="/logout" class="btn logout">Logout</a>
+                </p>
+            {% else %}
+                <p>
+                    <a href="/login" class="btn">Login</a>
+                    <a href="/register" class="btn">Register</a>
+                </p>
+            {% endif %}
+        </nav>
 
-    {% if session.get('role') == 'admin' %}
-        <a href="/admin_history">📜 Admin Dashboard (Old Model)</a>
-        <a href="/admin_history_v2">📜 Admin Dashboard (New Model)</a>
-    {% endif %}
+        <main>
+            {% if session.get('role') == 'admin' %}
+                <div class="admin-links">
+                    <a href="/admin_history" class="btn admin">📜 Admin Dashboard (Old Model)</a>
+                    <a href="/admin_history_v2" class="btn admin">📜 Admin Dashboard (New Model)</a>
+                </div>
+            {% endif %}
 
-    <br>
+            <div class="btn-container">
+                <form action="/predict" method="get">
+                    <button type="submit" class="model-btn">🩺 Use Old Model (Symptoms Only)</button>
+                </form>
 
-    <form action="/predict" method="get" style="display:inline;">
-        <button type="submit">🩺 Use Old Model (Symptoms Only)</button>
-    </form>
+                <form action="/predict_v2" method="get">
+                    <button type="submit" class="model-btn">🩺 Use New Model (Profile + Symptoms)</button>
+                </form>
+            </div>
 
-    <form action="/predict_v2" method="get" style="display:inline;">
-        <button type="submit">🩺 Use New Model (Profile + Symptoms)</button>
-    </form>
+            {% if username %}
+                <div class="history-links">
+                    <a href="/history" class="btn secondary">📂 View My History (Old Model)</a>
+                    <a href="/history_v2" class="btn secondary">📂 View My History (New Model)</a>
+                </div>
+            {% endif %}
+        </main>
 
-    {% if username %}
-        <br><br>
-        <a href="/history">📂 View My History (Old Model)</a>
-        <a href="/history_v2">📂 View My History (New Model)</a>
-    {% endif %}
-
+        <footer>
+            <p>© 2025 AI Disease Prediction | Powered by Flask + ML</p>
+        </footer>
+    </div>
 </body>
 </html>

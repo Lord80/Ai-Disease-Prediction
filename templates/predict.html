@@ -1,84 +1,35 @@
-<!-- templates/predict.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Disease Prediction - Model 1</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            background-color: #f9f9f9;
-        }
-        h2 {
-            text-align: center;
-        }
-        .search-box {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #search {
-            width: 60%;
-            padding: 10px;
-            font-size: 16px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .symptom-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            width: 100%;
-            max-width: 1000px;
-            margin-bottom: 20px;
-        }
-        .symptom-item {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .symptom-item label {
-            cursor: pointer;
-        }
-        button {
-            padding: 10px 25px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-    <h2>Select Symptoms</h2>
+    <div class="container predict-container">
+        <h2 class="form-title">🩺 Select Symptoms</h2>
 
-    <div class="search-box">
-        <input type="text" id="search" placeholder="Search symptoms..." onkeyup="filterSymptoms()">
-    </div>
-
-    <form method="POST" action="/predict">
-        <div class="symptom-grid" id="symptomList">
-            {% for symptom in symptoms %}
-                <div class="symptom-item">
-                    <label>
-                        <input type="checkbox" name="symptoms" value="{{ symptom }}"> {{ symptom }}
-                    </label>
-                </div>
-            {% endfor %}
+        <div class="search-box">
+            <input type="text" id="search" placeholder="🔍 Search symptoms..." onkeyup="filterSymptoms()">
         </div>
-        <button type="submit">Predict</button>
-    </form>
-<br>
-    <a href="/history">My Prediction History</a>
+
+        <form method="POST" action="/predict" class="predict-form">
+            <div class="symptom-grid" id="symptomList">
+                {% for symptom in symptoms %}
+                    <div class="symptom-item">
+                        <label>
+                            <input type="checkbox" name="symptoms" value="{{ symptom }}"> {{ symptom }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn primary">Predict</button>
+        </form>
+
+        <p class="redirect-text">
+            <a href="/history" class="link">📂 My Prediction History</a>
+        </p>
+    </div>
 
     <script>
         function filterSymptoms() {

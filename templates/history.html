@@ -1,30 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Prediction History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h2>Prediction History for {{ session.username }}</h2>
+    <div class="container">
+        <h2 class="page-title">Prediction History for {{ session.username }}</h2>
 
-    {% if history %}
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>Symptoms</th>
-            <th>Prediction</th>
-            <th>Timestamp</th>
-        </tr>
-        {% for row in history %}
-        <tr>
-            <td>{{ row.symptoms }}</td>
-            <td>{{ row.prediction }}</td>
-            <td>{{ row.timestamp }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-        <p>No history found.</p>
-    {% endif %}
+        {% if history %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Symptoms</th>
+                    <th>Prediction</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in history %}
+                <tr>
+                    <td>{{ row.symptoms }}</td>
+                    <td>{{ row.prediction }}</td>
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="no-history">No history found.</p>
+        {% endif %}
 
-    <br><a href="/">Go Back</a>
+        <div class="back-link">
+            <a href="/" class="btn">⬅ Go Back</a>
+        </div>
+    </div>
 </body>
 </html>

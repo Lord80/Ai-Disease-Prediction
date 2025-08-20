@@ -11,6 +11,12 @@ from remedies_v2 import remedy_dict_v2
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Change to secure secret in production
 
+try:
+    from disease_info import disease_info as disease_info_map
+except Exception as e:
+    print(f"[WARN] Could not load disease_info: {e}")
+    disease_info_map = {}
+
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
@@ -24,30 +30,42 @@ def get_db_connection():
         print(f"[DB] Connection error: {e}")
         return None
 
+# load old symptom-based model (model 1)
 try:
     with open('model/disease_model.pkl', 'rb') as f:
         temp = pickle.load(f)
         if isinstance(temp, tuple) and len(temp) >= 3:
-            model, disease_encoder, symptom_list = temp[0], temp[1], temp[2]
+            model_old, disease_encoder_old, symptom_list = temp[0], temp[1], temp[2]
         elif isinstance(temp, tuple) and len(temp) == 2:
-            model, disease_encoder = temp
+            model_old, disease_encoder_old = temp
             symptom_list = None
         else:
-            model = temp
-            disease_encoder = None
+            model_old = temp
+            disease_encoder_old = None
             symptom_list = None
-    print("[MODEL] Loaded disease_model (old).")
+    print("[MODEL] Loaded disease_model.pkl (old symptom-based).")
 except Exception as e:
     print(f"[MODEL] Failed to load model/disease_model.pkl: {e}")
-    model = None
-    disease_encoder = None
+    model_old = None
+    disease_encoder_old = None
     symptom_list = None
 
-with open("model/disease_model_v2.pkl", "rb") as f:
-    disease_model, disease_encoder = pickle.load(f)
+try:
+    with open("model/disease_model_v2.pkl", "rb") as f:
+        disease_model_v2, disease_encoder_v2 = pickle.load(f)
+    print("[MODEL] Loaded disease_model_v2.pkl (v2).")
+except Exception as e:
+    print(f"[MODEL] Failed to load model/disease_model_v2.pkl: {e}")
+    disease_model_v2 = None
+    disease_encoder_v2 = None
 
-with open("model/outcome_model.pkl", "rb") as f:
-    outcome_model = pickle.load(f)
+try:
+    with open("model/outcome_model.pkl", "rb") as f:
+        outcome_model = pickle.load(f)
+    print("[MODEL] Loaded outcome_model.pkl.")
+except Exception as e:
+    print(f"[MODEL] Failed to load model/outcome_model.pkl: {e}")
+    outcome_model = None
 
 
 @app.route('/')
@@ -68,10 +86,25 @@ def predict():
         input_vector = [1 if symptom in selected_symptoms else 0 for symptom in symptom_list]
         input_df = pd.DataFrame([input_vector], columns=symptom_list)
 
-        prediction = model.predict(input_df)[0]
-        predicted_disease = disease_encoder.inverse_transform([prediction])[0] if disease_encoder is not None else str(prediction)
+        # ---- Prediction + Confidence ----
+        try:
+            probs = model_old.predict_proba(input_df)[0]  # shape: (n_classes,)
+            top_idx = int(np.argmax(probs))
+            encoded_label = model_old.classes_[top_idx]
+            predicted_disease = (
+                disease_encoder_old.inverse_transform([encoded_label])[0]
+                if disease_encoder_old is not None else str(encoded_label)
+            )
+            confidence = round(float(probs[top_idx]) * 100, 2)
+        except Exception:
+            pred_enc = model_old.predict(input_df)[0]
+            predicted_disease = (
+                disease_encoder_old.inverse_transform([pred_enc])[0]
+                if disease_encoder_old is not None else str(pred_enc)
+            )
+            confidence = None
 
-        # Load dataset to extract related symptoms
+        # ---- Load dataset to extract related symptoms ----
         df = pd.read_csv('dataset/dataset.csv')
         symptom_cols = [col for col in df.columns if col.startswith('Symptom_')]
 
@@ -82,10 +115,32 @@ def predict():
                 symptom = row[col]
                 if pd.notna(symptom) and str(symptom).strip().lower() != 'none' and str(symptom).strip() != '':
                     disease_symptoms.add(str(symptom).strip())
-
         disease_symptoms = sorted(disease_symptoms)
 
-        # Save history for old model (if logged in)
+        info = disease_info_map.get(predicted_disease, {})
+
+        # ---- Build medical report fields ----
+        description = info.get(
+            "description",
+            f"No curated description available for {predicted_disease} yet."
+        )
+
+        remedies_list = info.get("remedies")
+        if not remedies_list:
+            rem_text = remedy_dict_v2.get(predicted_disease)
+            remedies_list = [rem_text] if rem_text else [
+                "General care: rest, stay hydrated, and consider OTC symptom relief.",
+                "Consult a clinician if symptoms persist or worsen."
+            ]
+
+        red_flags = info.get("red_flags", [
+            "Severe or worsening shortness of breath.",
+            "Persistent high fever (>39°C / 102.2°F) for more than 48 hours.",
+            "Chest pain, confusion, fainting, or severe dehydration.",
+            "Symptoms persist beyond 10–14 days or suddenly get worse."
+        ])
+
+        # ---- Save history ----
         if 'username' in session:
             username = session['username']
             symptoms_str = ", ".join(selected_symptoms)
@@ -102,14 +157,24 @@ def predict():
                     cursor.execute(insert_query, (username, symptoms_str, predicted_disease, timestamp))
                     conn.commit()
                 except Error as e:
-                    print(f"[DB] Failed to insert old-model history: {e}")
+                    print(f"[DB] Failed to insert history: {e}")
                 finally:
                     cursor.close()
                     conn.close()
 
-        return render_template('result.html', disease=predicted_disease, symptoms=disease_symptoms)
+        # ---- Render enriched report ----
+        return render_template(
+            'result.html',
+            disease=predicted_disease,
+            symptoms=disease_symptoms,
+            confidence=confidence,
+            description=description,
+            remedies=remedies_list,
+            red_flags=red_flags
+        )
 
     return render_template('predict.html', symptoms=symptom_list)
+
 
 
 @app.route('/predict_v2', methods=['GET', 'POST']) 
@@ -135,12 +200,12 @@ def predict_v2():
         )
 
         # Disease predictions
-        probs = disease_model.predict_proba(input_df)[0]
+        probs = disease_model_v2.predict_proba(input_df)[0]
         top_indices = np.argsort(probs)[::-1][:3]  # top 3
 
         top_diseases = []
         for idx in top_indices:
-            disease_name = disease_encoder.inverse_transform([idx])[0]
+            disease_name = disease_encoder_v2.inverse_transform([idx])[0]
             probability = round(float(probs[idx]) * 100, 2)
             remedy_text = remedy_dict_v2.get(disease_name, "No remedy available.")
             top_diseases.append({
@@ -153,6 +218,10 @@ def predict_v2():
         # Outcome prediction
         outcome_pred = int(outcome_model.predict(input_df)[0])
         outcome_text = "Positive" if outcome_pred == 1 else "Negative"
+
+        username = session.get('username')
+        if not username:
+            username = "Guest"  # Allow predictions as Guest
 
         # Store in MySQL
         conn = get_db_connection()
@@ -172,7 +241,7 @@ def predict_v2():
                     %s)
         """
         cursor.execute(sql, (
-            session['username'],  # 👈 store logged-in user's ID
+            username,  # 👈 store logged-in user's ID
             fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
             top_diseases[0]['name'], top_diseases[0]['probability'], top_diseases[0]['remedy'],
             top_diseases[1]['name'], top_diseases[1]['probability'], top_diseases[1]['remedy'],

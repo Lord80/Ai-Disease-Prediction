@@ -1,62 +1,83 @@
-<!-- templates/predict_v2.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Disease Prediction V2</title>
+    <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-    <h2>Disease Prediction System - V2</h2>
-    <form method="POST" action="/predict_v2">
-    <!-- Fever -->
-    <select name="fever">
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-    </select>
+    <div class="container predict-container">
+        <h2 class="form-title">🧬 Disease Prediction - V2</h2>
+        <p class="tagline">Provide your health details and symptoms</p>
 
-    <!-- Cough -->
-    <select name="cough">
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-    </select>
+        <form method="POST" action="/predict_v2" class="predict-form grid-form">
+            
+            <div class="form-group">
+                <label for="fever">🌡️ Fever</label>
+                <select id="fever" name="fever">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
 
-    <!-- Fatigue -->
-    <select name="fatigue">
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-    </select>
+            <div class="form-group">
+                <label for="cough">🤧 Cough</label>
+                <select id="cough" name="cough">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
 
-    <!-- Difficulty Breathing -->
-    <select name="breathing">
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-    </select>
+            <div class="form-group">
+                <label for="fatigue">😴 Fatigue</label>
+                <select id="fatigue" name="fatigue">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
 
-    <!-- Age -->
-    <input type="number" name="age" min="0" max="120">
+            <div class="form-group">
+                <label for="breathing">🫁 Difficulty Breathing</label>
+                <select id="breathing" name="breathing">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
 
-    <!-- Gender -->
-    <select name="gender">
-        <option value="1">Male</option>
-        <option value="0">Female</option>
-    </select>
+            <div class="form-group">
+                <label for="age">🎂 Age</label>
+                <input type="number" id="age" name="age" min="0" max="120" placeholder="Enter your age">
+            </div>
 
-    <!-- Blood Pressure -->
-    <select name="bp">
-        <option value="1">High</option>
-        <option value="-1">Low</option>
-        <option value="0">Normal</option>
-    </select>
+            <div class="form-group">
+                <label for="gender">⚧ Gender</label>
+                <select id="gender" name="gender">
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
+                </select>
+            </div>
 
-    <!-- Cholesterol Level -->
-    <select name="cholesterol">
-        <option value="1">High</option>
-        <option value="0">Normal</option>
-    </select>
+            <div class="form-group">
+                <label for="bp">🩸 Blood Pressure</label>
+                <select id="bp" name="bp">
+                    <option value="1">High</option>
+                    <option value="-1">Low</option>
+                    <option value="0">Normal</option>
+                </select>
+            </div>
 
-    <button type="submit">Predict</button>
-</form>
+            <div class="form-group">
+                <label for="cholesterol">🍔 Cholesterol Level</label>
+                <select id="cholesterol" name="cholesterol">
+                    <option value="1">High</option>
+                    <option value="0">Normal</option>
+                </select>
+            </div>
 
+            <div class="form-actions">
+                <button type="submit" class="btn primary">Predict</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

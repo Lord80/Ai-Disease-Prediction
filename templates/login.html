@@ -1,19 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Login</title>
+    <link rel="stylesheet" href="static/css/style.css"> <!-- Same global CSS -->
 </head>
 <body>
-    <h2>Login</h2>
-    <form method="POST">
-        <label>Username:</label><br>
-        <input type="text" name="username" required><br><br>
+    <div class="container auth-container">
+        <h2 class="form-title">🔑 Login</h2>
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">👤 Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
 
-        <label>Password:</label><br>
-        <input type="password" name="password" required><br><br>
+            <div class="form-group">
+                <label for="password">🔒 Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
 
-        <button type="submit">Login</button>
-    </form>
-    <p>Don't have an account? <a href="/register">Register</a></p>
+            <button type="submit" class="btn primary">Login</button>
+        </form>
+
+        <p class="redirect-text">Don’t have an account? <a href="/register" class="link">Register here</a></p>
+    </div>
 </body>
 </html>
