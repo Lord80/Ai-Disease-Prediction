@@ -274,7 +274,7 @@ select:focus {
 @media (max-width: 768px) {
     .full-width { grid-column: span 1; }
 }
-.list { margin: 10px 0 0 20px; }
+/* .list { margin: 10px 0 0 20px; } */
 .muted { color: #666; font-size: 14px; }
 .red { color: #b00020; }
 .center { text-align: center; margin-top: 20px; }
@@ -354,4 +354,119 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Extra CSS fixes (extends your external CSS, not duplicates) */
+.list {
+    list-style: none;   /* Remove default bullets */
+    padding-left: 0;    /* Align items flush left */
+}
+.list li {
+    margin: 6px 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* space between icon and text */
+}
+.list li span.icon {
+    font-size: 1.2rem; 
+    flex-shrink: 0; /* icon stays fixed size */
+}
+
+/* ===== Result V2 Specific ===== */
+.result-container-v2 {
+    background: #fff;
+    padding: 25px 35px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 700px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+.result-title-v2 {
+    font-size: 26px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.outcome {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+.outcome.positive { color: #b00020; }   /* red */
+.outcome.negative { color: #16a085; }   /* green */
+
+.disease-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+.disease-list li {
+    background: #ecf0f1;
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 16px;
+    line-height: 1.6;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.disease-list li b {
+    color: #2980b9;
+}
+.disease-list .remedy {
+    display: block;
+    margin-top: 6px;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* Back button style */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* space between arrow and text */
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #4facfe, #007bff);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 50px;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+  cursor: pointer;
+}
+
+/* Smooth hover */
+.back-btn:hover {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  transform: translateX(-3px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+
+/* Arrow style */
+.back-btn::before {
+  content: "⮜"; /* nicer, bold arrow */
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+/* Little arrow animation */
+.back-btn:hover::before {
+  transform: translateX(-3px);
+}
+
+/* Alignment fix */
+.container .back-btn {
+  float: left;
+  margin: 4px 0 16px 0;
+}
+
+.container .form-title {
+  clear: both;
 }

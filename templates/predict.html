@@ -1,46 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Disease Prediction - Model 1</title>
-    <link rel="stylesheet" href="static/css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="static/css/style.css" />
+    
+  </head>
+  <body>
     <div class="container predict-container">
-        <h2 class="form-title">🩺 Select Symptoms</h2>
+      <a href="javascript:history.back()" class="back-btn">Back</a>
+      <h2 class="form-title">🩺 Select Symptoms</h2>
 
-        <div class="search-box">
-            <input type="text" id="search" placeholder="🔍 Search symptoms..." onkeyup="filterSymptoms()">
+      <div class="search-box">
+        <input
+          type="text"
+          id="search"
+          placeholder="🔍 Search symptoms..."
+          onkeyup="filterSymptoms()"
+        />
+      </div>
+
+      <form method="POST" action="/predict" class="predict-form">
+        <div class="symptom-grid" id="symptomList">
+          {% for symptom in symptoms %}
+          <div class="symptom-item">
+            <label>
+              <input type="checkbox" name="symptoms" value="{{ symptom }}" /> {{
+              symptom }}
+            </label>
+          </div>
+          {% endfor %}
         </div>
+        <button type="submit" class="btn primary">Predict</button>
+      </form>
 
-        <form method="POST" action="/predict" class="predict-form">
-            <div class="symptom-grid" id="symptomList">
-                {% for symptom in symptoms %}
-                    <div class="symptom-item">
-                        <label>
-                            <input type="checkbox" name="symptoms" value="{{ symptom }}"> {{ symptom }}
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-            <button type="submit" class="btn primary">Predict</button>
-        </form>
-
-        <p class="redirect-text">
-            <a href="/history" class="link">📂 My Prediction History</a>
-        </p>
+      <p class="redirect-text">
+        <a href="/history" class="link">📂 My Prediction History</a>
+      </p>
     </div>
 
     <script>
-        function filterSymptoms() {
-            const query = document.getElementById("search").value.toLowerCase();
-            const items = document.getElementsByClassName("symptom-item");
+      function filterSymptoms() {
+        const query = document.getElementById("search").value.toLowerCase();
+        const items = document.getElementsByClassName("symptom-item");
 
-            for (let i = 0; i < items.length; i++) {
-                const label = items[i].textContent.toLowerCase();
-                items[i].style.display = label.includes(query) ? "block" : "none";
-            }
+        for (let i = 0; i < items.length; i++) {
+          const label = items[i].textContent.toLowerCase();
+          items[i].style.display = label.includes(query) ? "block" : "none";
         }
+      }
     </script>
-</body>
+  </body>
 </html>

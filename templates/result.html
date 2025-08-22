@@ -7,21 +7,31 @@
 </head>
 <body>
 <div class="container result-container">
-    <h2 class="result-title">🩺 Predicted Disease: <strong>{{ disease }}</strong>
-        {% if confidence is not none %}
-            <span class="badge">Confidence: {{ confidence }}%</span>
-        {% endif %}
-    </h2>
 
-    <p class="muted"><strong>📖 Summary:</strong> {{ description }}</p>
+    <!-- Disease Title -->
+    <div class="card full-width highlight">
+        <h2 class="result-title">
+            🩺 Predicted Disease: <strong>{{ disease }}</strong>
+            {% if confidence is not none %}
+                <span class="badge">Confidence: {{ confidence }}%</span>
+            {% endif %}
+        </h2>
+    </div>
 
-    <div class="grid">
+    <!-- Summary -->
+    <div class="card full-width">
+        <h3>📖 Summary</h3>
+        <p class="muted">{{ description }}</p>
+    </div>
+
+    <!-- Symptoms & Remedies Side by Side -->
+    <div class="grid two-columns">
         <div class="card">
             <h3>📝 Common / Related Symptoms</h3>
             {% if symptoms %}
                 <ul class="list">
                     {% for s in symptoms %}
-                        <li>{{ s }}</li>
+                        <li><span class="icon">✔️</span> {{ s }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
@@ -34,30 +44,33 @@
             {% if remedies %}
                 <ul class="list">
                     {% for r in remedies %}
-                        <li>{{ r }}</li>
+                        <li><span class="icon">💡</span> {{ r }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
                 <p class="muted">No remedies available.</p>
             {% endif %}
         </div>
-
-        <div class="card full-width">
-            <h3 class="red">⚠️ When to Seek Medical Care</h3>
-            {% if red_flags %}
-                <ul class="list">
-                    {% for f in red_flags %}
-                        <li>{{ f }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="muted">No specific red flags available.</p>
-            {% endif %}
-        </div>
     </div>
 
+    <!-- Red Flags -->
+    <div class="card full-width danger">
+        <h3>⚠️ When to Seek Medical Care</h3>
+        {% if red_flags %}
+            <ul class="list">
+                {% for f in red_flags %}
+                    <li><span class="icon">❗</span> {{ f }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">No specific red flags available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
     <div class="center">
-        <a href="/" class="btn primary">🔄 Predict Again</a>
+        <a href="/predict" class="btn primary">🔄 Predict Again</a>
+        <a href="/" class="btn secondary">🏠 Back to Home</a>
     </div>
 </div>
 </body>
