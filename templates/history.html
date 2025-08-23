@@ -1,40 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Prediction History</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <title>Prediction History</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h2 class="page-title">Prediction History for {{ session.username }}</h2>
+  <div class="wide-container history-wrap">
+    <a href="javascript:history.back()" class="back-btn">Back</a>
+    <div class="history-toolbar">
+      <h2 class="history-title">Prediction History for {{ session.username }}</h2>
 
-        {% if history %}
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Symptoms</th>
-                    <th>Prediction</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in history %}
-                <tr>
-                    <td>{{ row.symptoms }}</td>
-                    <td>{{ row.prediction }}</td>
-                    <td>{{ row.timestamp }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p class="no-history">No history found.</p>
-        {% endif %}
-
-        <div class="back-link">
-            <a href="/" class="btn">⬅ Go Back</a>
-        </div>
+      <div class="history-actions">
+        <input id="historySearch" class="history-search" type="text" placeholder="🔍 Search history…">
+      </div>
     </div>
+
+    {% if history %}
+      <div class="table-responsive">
+        <table id="historyTable" class="table-adv">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="prediction">Prediction <span class="sort-indicator">▼</span></th>
+              <th>Symptoms</th>
+              <th class="sortable" data-col="timestamp">Timestamp <span class="sort-indicator">▼</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in history %}
+              <tr>
+                <td>
+                  {% if row.prediction %}
+                    <span class="chip chip-blue">{{ row.prediction }}</span>
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="symptoms-cell">
+                  {% if row.symptoms %}
+                    {{ row.symptoms }}
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+                <td data-ts="{{ row.timestamp }}">{{ row.timestamp }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="history-empty">
+        <p>No history found.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // 🔎 Search filter
+    (function () {
+      const input = document.getElementById('historySearch');
+      const rows = () => Array.from(document.querySelectorAll('#historyTable tbody tr'));
+      input?.addEventListener('keyup', function () {
+        const q = this.value.toLowerCase();
+        rows().forEach(tr => {
+          tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    })();
+
+    // ⬆⬇ Simple sort on click (string or date)
+    (function () {
+      const table = document.getElementById('historyTable');
+      if (!table) return;
+      const heads = table.querySelectorAll('th.sortable');
+
+      heads.forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.getAttribute('data-col');
+          const index = Array.from(th.parentNode.children).indexOf(th);
+          const asc = !th.classList.contains('asc');
+          heads.forEach(h => h.classList.remove('asc'));
+          if (asc) th.classList.add('asc');
+
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+
+          const getVal = tr => tr.children[index].dataset.ts || tr.children[index].innerText.trim().toLowerCase();
+
+          rows.sort((a, b) => {
+            const A = getVal(a), B = getVal(b);
+            if (col === 'timestamp') {
+              // assume ISO strings; fallback to string compare
+              return asc ? A.localeCompare(B) : B.localeCompare(A);
+            }
+            return asc ? A.localeCompare(B) : B.localeCompare(A);
+          });
+
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

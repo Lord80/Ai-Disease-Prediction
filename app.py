@@ -9,13 +9,15 @@ from mysql.connector import Error
 from remedies_v2 import remedy_dict_v2
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Change to secure secret in production
+# Change to secure secret in production
+app.secret_key = 'your_secret_key_here'
 
 try:
     from disease_info import disease_info as disease_info_map
 except Exception as e:
     print(f"[WARN] Could not load disease_info: {e}")
     disease_info_map = {}
+
 
 def get_db_connection():
     try:
@@ -29,6 +31,7 @@ def get_db_connection():
     except Error as e:
         print(f"[DB] Connection error: {e}")
         return None
+
 
 # load old symptom-based model (model 1)
 try:
@@ -74,6 +77,8 @@ def index():
     return render_template('index.html', username=username)
 
 # ----- Old model predict -----
+
+
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
     if request.method == 'POST':
@@ -83,7 +88,8 @@ def predict():
         if symptom_list is None:
             return "Symptom list not loaded on server.", 500
 
-        input_vector = [1 if symptom in selected_symptoms else 0 for symptom in symptom_list]
+        input_vector = [
+            1 if symptom in selected_symptoms else 0 for symptom in symptom_list]
         input_df = pd.DataFrame([input_vector], columns=symptom_list)
 
         # ---- Prediction + Confidence ----
@@ -106,7 +112,8 @@ def predict():
 
         # ---- Load dataset to extract related symptoms ----
         df = pd.read_csv('dataset/dataset.csv')
-        symptom_cols = [col for col in df.columns if col.startswith('Symptom_')]
+        symptom_cols = [
+            col for col in df.columns if col.startswith('Symptom_')]
 
         related_rows = df[df['Disease'] == predicted_disease]
         disease_symptoms = set()
@@ -154,7 +161,8 @@ def predict():
                         INSERT INTO history (username, symptoms, prediction, timestamp)
                         VALUES (%s, %s, %s, %s)
                     """
-                    cursor.execute(insert_query, (username, symptoms_str, predicted_disease, timestamp))
+                    cursor.execute(
+                        insert_query, (username, symptoms_str, predicted_disease, timestamp))
                     conn.commit()
                 except Error as e:
                     print(f"[DB] Failed to insert history: {e}")
@@ -176,8 +184,7 @@ def predict():
     return render_template('predict.html', symptoms=symptom_list)
 
 
-
-@app.route('/predict_v2', methods=['GET', 'POST']) 
+@app.route('/predict_v2', methods=['GET', 'POST'])
 def predict_v2():
     if request.method == 'POST':
         # Get numeric values from form
@@ -207,13 +214,13 @@ def predict_v2():
         for idx in top_indices:
             disease_name = disease_encoder_v2.inverse_transform([idx])[0]
             probability = round(float(probs[idx]) * 100, 2)
-            remedy_text = remedy_dict_v2.get(disease_name, "No remedy available.")
+            remedy_text = remedy_dict_v2.get(
+                disease_name, "No remedy available.")
             top_diseases.append({
                 "name": disease_name,
                 "probability": probability,
                 "remedy": remedy_text
             })
-
 
         # Outcome prediction
         outcome_pred = int(outcome_model.predict(input_df)[0])
@@ -226,26 +233,22 @@ def predict_v2():
         # Store in MySQL
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         sql = """
-            INSERT INTO prediction_history 
+            INSERT INTO prediction_history
             (username, fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
-            top_disease_1, probability_1, remedy_1,
-            top_disease_2, probability_2, remedy_2,
-            top_disease_3, probability_3, remedy_3,
-            outcome)
+            top_disease_1, top_disease_2, top_disease_3, outcome)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,
-                    %s,%s,%s,
-                    %s,%s,%s,
-                    %s,%s,%s,
-                    %s)
+                    %s,%s,%s,%s)
         """
+
+
         cursor.execute(sql, (
-            username,  # 👈 store logged-in user's ID
+            username,
             fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
-            top_diseases[0]['name'], top_diseases[0]['probability'], top_diseases[0]['remedy'],
-            top_diseases[1]['name'], top_diseases[1]['probability'], top_diseases[1]['remedy'],
-            top_diseases[2]['name'], top_diseases[2]['probability'], top_diseases[2]['remedy'],
+            top_diseases[0]['name'],
+            top_diseases[1]['name'],
+            top_diseases[2]['name'],
             outcome_text
         ))
         conn.commit()
@@ -256,9 +259,6 @@ def predict_v2():
                                outcome=outcome_text)
 
     return render_template('predict_v2.html')
-
-
-
 
 # ----- History for old model -----
 @app.route('/history')
