@@ -5,96 +5,29 @@
   <meta charset="UTF-8">
   <title>Admin - Prediction History</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <style>
-    /* ===== Admin History Specific Styling ===== */
-    .admin-history-wrap {
-      max-width: 1200px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
-
-    .admin-history-title {
-      font-size: 1.8rem;
-      color: #2c3e50;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: 600;
-    }
-
-    .admin-search {
-      display: block;
-      margin: 0 auto 20px auto;
-      padding: 10px 14px;
-      width: 320px;
-      max-width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-
-    .admin-search:focus {
-      border-color: #0d6efd;
-      box-shadow: 0 0 6px rgba(13,110,253,0.3);
-    }
-
-    .table-adv {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: 10px;
-    }
-
-    .table-adv th {
-      background: #0d6efd;
-      color: #fff;
-      text-align: left;
-      padding: 12px 15px;
-      font-weight: 600;
-    }
-
-    .table-adv td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #f1f1f1;
-    }
-
-    .table-adv tr:nth-child(even) {
-      background: #f9fbff;
-    }
-
-    .table-adv tr:hover {
-      background: #eef5ff;
-    }
-
-    .muted {
-      color: #888;
-      font-style: italic;
-    }
-  </style>
 </head>
 <body>
   <div class="admin-history-wrap">
-    <h1 class="admin-history-title">Admin - All Prediction History</h1>
-
-    <input 
-      type="text" 
-      id="searchBox" 
-      class="admin-search" 
-      onkeyup="filterTable()" 
-      placeholder="🔍 Search by username, symptoms, prediction..."
-    >
+    <a href="/" class="back-btn">Go Back</a>
+    <!-- Toolbar -->
+    <div class="history-toolbar">
+      <h1 class="admin-history-title">📊 Admin - All Prediction History</h1>
+      <input 
+        type="text" 
+        id="searchBox" 
+        class="admin-search" 
+        onkeyup="filterTable()" 
+        placeholder="🔍 Search username, symptoms, timestamp..."
+      >
+    </div>
 
     {% if history %}
       <div class="table-responsive">
-        <table id="historyTable" class="table-adv">
+        <table id="historyTable" class="table-adv wide-table">
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Timestamp</th>
+              <th class="sortable">Username <span class="sort-indicator"></span></th>
+              <th class="sortable">Timestamp <span class="sort-indicator"></span></th>
               <th>Symptoms</th>
               <th>Prediction</th>
             </tr>
@@ -105,18 +38,25 @@
               <td>{{ row.username }}</td>
               <td>{{ row.timestamp }}</td>
               <td>{{ row.symptoms or '—' }}</td>
-              <td>{{ row.prediction or '—' }}</td>
+              <td>
+                {% if row.prediction %}
+                  <span class="chip chip-blue">{{ row.prediction }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <p class="muted">No prediction history found.</p>
+      <p class="history-empty">No prediction history found.</p>
     {% endif %}
   </div>
 
   <script>
+    // 🔎 Search filter
     function filterTable() {
       const input = document.getElementById("searchBox");
       const filter = input.value.toLowerCase();
@@ -128,6 +68,31 @@
         rows[i].style.display = rowText.includes(filter) ? "" : "none";
       }
     }
+
+    // ⬆️⬇️ Sortable columns
+    document.querySelectorAll("th.sortable").forEach((th, index) => {
+      th.addEventListener("click", () => {
+        const table = th.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const isAsc = th.classList.contains("asc");
+
+        // Reset states
+        table.querySelectorAll("th").forEach(h => h.classList.remove("asc", "desc"));
+
+        rows.sort((a, b) => {
+          const aText = a.children[index].textContent.trim();
+          const bText = b.children[index].textContent.trim();
+          return isAsc
+            ? bText.localeCompare(aText)
+            : aText.localeCompare(bText);
+        });
+
+        rows.forEach(r => tbody.appendChild(r));
+        th.classList.toggle("asc", !isAsc);
+        th.classList.toggle("desc", isAsc);
+      });
+    });
   </script>
 </body>
 </html>
