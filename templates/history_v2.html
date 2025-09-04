@@ -1,94 +1,190 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>My Prediction History</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #f9f9f9;
-        margin: 0;
-        padding: 0;
-      }
-      h1 {
-        text-align: center;
-        padding: 20px;
-        background: #007bff;
-        color: white;
-      }
-      table {
-        width: 90%;
-        margin: 20px auto;
-        border-collapse: collapse;
-        background: white;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-      th,
-      td {
-        padding: 10px;
-        text-align: center;
-        border: 1px solid #ddd;
-      }
-      th {
-        background: #007bff;
-        color: white;
-      }
-      tr:hover {
-        background: #f1f1f1;
-      }
-      .back-btn {
-        display: block;
-        width: 150px;
-        margin: 20px auto;
-        padding: 10px;
-        text-align: center;
-        background: #28a745;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-      }
-      .back-btn:hover {
-        background: #218838;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>My Prediction History</h1>
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Fever</th>
-        <th>Cough</th>
-        <th>Fatigue</th>
-        <th>Breathing</th>
-        <th>Age</th>
-        <th>Gender</th>
-        <th>BP</th>
-        <th>Cholesterol</th>
-        <th>Top Disease 1</th>
-        <th>Top Disease 2</th>
-        <th>Top Disease 3</th>
-        <th>Outcome</th>
-        <th>Date</th>
-      </tr>
-      {% for row in history %}
-      <tr>
-        <td>{{ row.id }}</td>
-        <td>{{ row.fever }}</td>
-        <td>{{ row.cough }}</td>
-        <td>{{ row.fatigue }}</td>
-        <td>{{ row.breathing }}</td>
-        <td>{{ row.age }}</td>
-        <td>{{ 'Male' if row.gender == 1 else 'Female' }}</td>
-        <td>{{ row.bp }}</td>
-        <td>{{ row.cholesterol }}</td>
-        <td>{{ row.top_disease_1 }}</td>
-        <td>{{ row.top_disease_2 }}</td>
-        <td>{{ row.top_disease_3 }}</td>
-        <td>{{ row.outcome }}</td>
-        <td>{{ row.predicted_at }}</td>
-      </tr>
-      {% endfor %}
-    </table>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prediction History (Model v2)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+  /* ===== Sortable Styling (Modern & Smooth) ===== */
+  th.sortable {
+    cursor: pointer;
+    position: relative;
+    padding-right: 22px;
+    user-select: none;
+    transition: color 0.2s ease;
+  }
+
+  /* Base arrow (gray, hidden) */
+  th.sortable .sort-icon {
+    width: 14px;
+    height: 14px;
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg) scale(0.8);
+    opacity: 0.3;
+    transition: transform 0.25s ease, opacity 0.25s ease, fill 0.25s ease;
+    fill: #6c757d; /* neutral gray */
+  }
+
+  /* Ascending state */
+  th.sortable.asc .sort-icon {
+    transform: translateY(-50%) rotate(180deg) scale(1);
+    opacity: 1;
+    fill: #0d6efd; /* blue */
+  }
+
+  /* Descending state */
+  th.sortable.desc .sort-icon {
+    transform: translateY(-50%) rotate(0deg) scale(1);
+    opacity: 1;
+    fill: #0d6efd; /* blue */
+  }
+
+  /* Highlight active column text */
+  th.sortable.asc,
+  th.sortable.desc {
+    color: #0d6efd;
+    font-weight: 600;
+  }
+</style>
+
+</head>
+<body>
+  <div class="wide-container history-wrap">
     <a href="/" class="back-btn">Back to Dashboard</a>
-  </body>
+    <div class="history-toolbar">
+      <h2 class="history-title">Prediction History (v2) for {{ session.username }}</h2>
+
+      <div class="history-actions">
+        <input id="historySearch" class="history-search" type="text" placeholder="🔍 Search history…">
+      </div>
+    </div>
+
+    {% if history %}
+      <div class="table-responsive">
+        <table id="historyTable" class="table-adv">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="id">ID
+                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+              </th>
+              <th>Fever</th>
+              <th>Cough</th>
+              <th>Fatigue</th>
+              <th>Breathing</th>
+              <th class="sortable" data-col="age">Age
+                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+              </th>
+              <th>Gender</th>
+              <th>BP</th>
+              <th>Cholesterol</th>
+              <th>Top Disease 1</th>
+              <th>Top Disease 2</th>
+              <th>Top Disease 3</th>
+              <th>Outcome</th>
+              <th class="sortable" data-col="timestamp">Date
+                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in history %}
+            <tr>
+              <td>{{ row.id }}</td>
+              <td>{{ row.fever }}</td>
+              <td>{{ row.cough }}</td>
+              <td>{{ row.fatigue }}</td>
+              <td>{{ row.breathing }}</td>
+              <td>{{ row.age }}</td>
+              <td>{{ 'Male' if row.gender == 1 else 'Female' }}</td>
+              <td>{{ row.bp }}</td>
+              <td>{{ row.cholesterol }}</td>
+              <td>
+                {% if row.top_disease_1 %}
+                  <span class="chip chip-blue">{{ row.top_disease_1 }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td>{% if row.top_disease_2 %}
+                  <span class="chip chip-blue">{{ row.top_disease_2 }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}</td>
+              <td>{% if row.top_disease_3 %}
+                  <span class="chip chip-blue">{{ row.top_disease_3 }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}</td>
+              <td>{{ row.outcome or '—' }}</td>
+              <td data-ts="{{ row.predicted_at }}">{{ row.predicted_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="history-empty">
+        <p>No history found.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // 🔎 Search filter
+    (function () {
+      const input = document.getElementById('historySearch');
+      const rows = () => Array.from(document.querySelectorAll('#historyTable tbody tr'));
+      input?.addEventListener('keyup', function () {
+        const q = this.value.toLowerCase();
+        rows().forEach(tr => {
+          tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    })();
+
+    // ⬆⬇ Sorting for ID, Age, Date
+    (function () {
+      const table = document.getElementById('historyTable');
+      if (!table) return;
+      const heads = table.querySelectorAll('th.sortable');
+
+      heads.forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.getAttribute('data-col');
+          const index = Array.from(th.parentNode.children).indexOf(th);
+          const asc = !th.classList.contains('asc');
+          heads.forEach(h => h.classList.remove('asc', 'desc'));
+          th.classList.add(asc ? 'asc' : 'desc');
+
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+
+          const getVal = tr => tr.children[index].dataset.ts || tr.children[index].innerText.trim();
+
+          rows.sort((a, b) => {
+            let A = getVal(a), B = getVal(b);
+
+            if (col === 'id' || col === 'age') {
+              A = parseInt(A) || 0;
+              B = parseInt(B) || 0;
+              return asc ? A - B : B - A;
+            }
+
+            if (col === 'timestamp') {
+              let dateA = new Date(A);
+              let dateB = new Date(B);
+              return asc ? dateA - dateB : dateB - dateA;
+            }
+
+            return asc ? A.localeCompare(B) : B.localeCompare(A);
+          });
+
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    })();
+  </script>
+</body>
 </html>

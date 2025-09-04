@@ -1,98 +1,133 @@
 <!-- templates/admin_history.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin - Prediction History</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-        }
+  <meta charset="UTF-8">
+  <title>Admin - Prediction History</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* ===== Admin History Specific Styling ===== */
+    .admin-history-wrap {
+      max-width: 1200px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
 
-        h1 {
-            color: #2c3e50;
-        }
+    .admin-history-title {
+      font-size: 1.8rem;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
 
-        #searchBox {
-            padding: 10px;
-            width: 300px;
-            font-size: 16px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+    .admin-search {
+      display: block;
+      margin: 0 auto 20px auto;
+      padding: 10px 14px;
+      width: 320px;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+    .admin-search:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 6px rgba(13,110,253,0.3);
+    }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
+    .table-adv {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 10px;
+    }
 
-        th {
-            background-color: #3498db;
-            color: white;
-        }
+    .table-adv th {
+      background: #0d6efd;
+      color: #fff;
+      text-align: left;
+      padding: 12px 15px;
+      font-weight: 600;
+    }
 
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
+    .table-adv td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f1f1f1;
+    }
 
-        tr:hover {
-            background-color: #e0e0e0;
-        }
+    .table-adv tr:nth-child(even) {
+      background: #f9fbff;
+    }
 
-        .center {
-            text-align: center;
-        }
-    </style>
+    .table-adv tr:hover {
+      background: #eef5ff;
+    }
 
-    <script>
-        function filterTable() {
-            var input = document.getElementById("searchBox");
-            var filter = input.value.toLowerCase();
-            var table = document.getElementById("historyTable");
-            var rows = table.getElementsByTagName("tr");
-
-            for (var i = 1; i < rows.length; i++) {
-                var rowText = rows[i].textContent.toLowerCase();
-                if (rowText.includes(filter)) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
-            }
-        }
-    </script>
+    .muted {
+      color: #888;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-    <h1 class="center">Admin - All Prediction History</h1>
+  <div class="admin-history-wrap">
+    <h1 class="admin-history-title">Admin - All Prediction History</h1>
 
-    <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="Search by username, symptoms, prediction...">
+    <input 
+      type="text" 
+      id="searchBox" 
+      class="admin-search" 
+      onkeyup="filterTable()" 
+      placeholder="🔍 Search by username, symptoms, prediction..."
+    >
 
     {% if history %}
-        <table id="historyTable">
+      <div class="table-responsive">
+        <table id="historyTable" class="table-adv">
+          <thead>
             <tr>
-                <th>Username</th>
-                <th>Timestamp</th>
-                <th>Symptoms</th>
-                <th>Prediction</th>
+              <th>Username</th>
+              <th>Timestamp</th>
+              <th>Symptoms</th>
+              <th>Prediction</th>
             </tr>
+          </thead>
+          <tbody>
             {% for row in history %}
             <tr>
-                <td>{{ row.username }}</td>
-                <td>{{ row.timestamp }}</td>
-                <td>{{ row.symptoms }}</td>
-                <td>{{ row.prediction }}</td>
+              <td>{{ row.username }}</td>
+              <td>{{ row.timestamp }}</td>
+              <td>{{ row.symptoms or '—' }}</td>
+              <td>{{ row.prediction or '—' }}</td>
             </tr>
             {% endfor %}
+          </tbody>
         </table>
+      </div>
     {% else %}
-        <p>No prediction history found.</p>
+      <p class="muted">No prediction history found.</p>
     {% endif %}
+  </div>
+
+  <script>
+    function filterTable() {
+      const input = document.getElementById("searchBox");
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById("historyTable");
+      const rows = table.getElementsByTagName("tr");
+
+      for (let i = 1; i < rows.length; i++) {
+        const rowText = rows[i].textContent.toLowerCase();
+        rows[i].style.display = rowText.includes(filter) ? "" : "none";
+      }
+    }
+  </script>
 </body>
 </html>

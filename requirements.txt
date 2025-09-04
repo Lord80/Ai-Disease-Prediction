@@ -1,7 +1,13 @@
 flask
+Flask-MySQLdb
+Flask-Mail
+python-dotenv
 pandas
 numpy
 scikit-learn
 flask-bcrypt
 flask-login
 flask-pymongo
+Werkzeug
+mysqlclient
+scikit-learn
