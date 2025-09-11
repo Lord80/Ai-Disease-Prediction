@@ -9,7 +9,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, #e3f2fd, #fce4ec);
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
     color: #333;
     display: flex;
     justify-content: center;
@@ -22,7 +22,8 @@ body {
    2. Containers
 ========================== */
 .container {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
     padding: 30px 40px;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
