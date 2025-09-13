@@ -1,5 +1,3 @@
-# train_model.py
-
 import pandas as pd
 import pickle
 from sklearn.ensemble import RandomForestClassifier

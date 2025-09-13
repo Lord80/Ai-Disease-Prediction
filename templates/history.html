@@ -57,7 +57,6 @@
   </div>
 
   <script>
-    // 🔎 Search filter
     (function () {
       const input = document.getElementById('historySearch');
       const rows = () => Array.from(document.querySelectorAll('#historyTable tbody tr'));
@@ -69,7 +68,7 @@
       });
     })();
 
-    // ⬆⬇ Simple sort on click (string or date)
+    // ⬆⬇ Simple sort on click
     (function () {
       const table = document.getElementById('historyTable');
       if (!table) return;
@@ -91,7 +90,6 @@
           rows.sort((a, b) => {
             const A = getVal(a), B = getVal(b);
             if (col === 'timestamp') {
-              // assume ISO strings; fallback to string compare
               return asc ? A.localeCompare(B) : B.localeCompare(A);
             }
             return asc ? A.localeCompare(B) : B.localeCompare(A);

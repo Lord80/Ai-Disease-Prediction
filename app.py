@@ -9,7 +9,7 @@ from mysql.connector import Error
 from remedies_v2 import remedy_dict_v2
 
 app = Flask(__name__)
-# Change to secure secret in production
+
 app.secret_key = 'your_secret_key_here'
 
 try:
@@ -33,7 +33,7 @@ def get_db_connection():
         return None
 
 
-# load old symptom-based model (model 1)
+# load model 1
 try:
     with open('model/disease_model.pkl', 'rb') as f:
         temp = pickle.load(f)
@@ -53,6 +53,7 @@ except Exception as e:
     disease_encoder_old = None
     symptom_list = None
 
+# load model 2
 try:
     with open("model/disease_model_v2.pkl", "rb") as f:
         disease_model_v2, disease_encoder_v2 = pickle.load(f)
@@ -76,8 +77,6 @@ def index():
     username = session.get('username')
     return render_template('index.html', username=username)
 
-# ----- Old model predict -----
-
 
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
@@ -94,7 +93,7 @@ def predict():
 
         # ---- Prediction + Confidence ----
         try:
-            probs = model_old.predict_proba(input_df)[0]  # shape: (n_classes,)
+            probs = model_old.predict_proba(input_df)[0]
             top_idx = int(np.argmax(probs))
             encoded_label = model_old.classes_[top_idx]
             predicted_disease = (
@@ -170,7 +169,6 @@ def predict():
                     cursor.close()
                     conn.close()
 
-        # ---- Render enriched report ----
         return render_template(
             'result.html',
             disease=predicted_disease,
@@ -187,7 +185,6 @@ def predict():
 @app.route('/predict_v2', methods=['GET', 'POST'])
 def predict_v2():
     if request.method == 'POST':
-        # Get numeric values from form
         fever = int(request.form.get('fever', 0))
         cough = int(request.form.get('cough', 0))
         fatigue = int(request.form.get('fatigue', 0))
@@ -197,7 +194,6 @@ def predict_v2():
         bp = int(request.form.get('bp', 0))
         cholesterol = int(request.form.get('cholesterol', 0))
 
-        # Create DataFrame with correct column names
         input_df = pd.DataFrame(
             [[fever, cough, fatigue, breathing, age, gender, bp, cholesterol]],
             columns=[
@@ -206,9 +202,8 @@ def predict_v2():
             ]
         )
 
-        # Disease predictions
         probs = disease_model_v2.predict_proba(input_df)[0]
-        top_indices = np.argsort(probs)[::-1][:3]  # top 3
+        top_indices = np.argsort(probs)[::-1][:3]
 
         top_diseases = []
         for idx in top_indices:
@@ -260,7 +255,7 @@ def predict_v2():
 
     return render_template('predict_v2.html')
 
-# ----- History for old model -----
+
 @app.route('/history')
 def view_history():
     if 'username' not in session:
@@ -302,7 +297,7 @@ def admin_history():
 
     return render_template('admin_history.html', history=records)
 
-# ----- History for v2 model (user) -----
+
 @app.route('/history_v2')
 def history_v2():
     if 'username' not in session:
@@ -323,8 +318,6 @@ def history_v2():
     conn.close()
 
     return render_template('history_v2.html', history=history)
-
-# ----- Admin history for v2 -----
 
 
 @app.route('/admin_history_v2')
@@ -347,8 +340,6 @@ def admin_history_v2():
     return render_template('admin_history_v2.html', history=history)
 
 
-
-# ----- Auth routes -----
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':

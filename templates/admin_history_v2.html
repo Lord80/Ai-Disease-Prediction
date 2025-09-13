@@ -1,4 +1,3 @@
-<!-- templates/admin_history_v2.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +8,6 @@
 <body>
   <div class="admin-history-wrap">
     <a href="/" class="back-btn">Go Back</a>
-    <!-- Toolbar -->
     <div class="history-toolbar">
       <h1 class="admin-history-title">📊 All Users Prediction History</h1>
       <input 
@@ -82,7 +80,6 @@
   </div>
 
   <script>
-    // 🔎 Search filter
     function filterTable() {
       const input = document.getElementById("searchBox");
       const filter = input.value.toLowerCase();
@@ -103,7 +100,6 @@
         const rows = Array.from(tbody.querySelectorAll("tr"));
         const isAsc = th.classList.contains("asc");
 
-        // Reset states
         table.querySelectorAll("th").forEach(h => h.classList.remove("asc", "desc"));
 
         rows.sort((a, b) => {
