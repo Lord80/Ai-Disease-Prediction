@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 # Load dataset
 df = pd.read_csv("dataset/Disease_symptom_and_patient_profile_dataset.csv")
 df.columns = df.columns.str.strip()
-df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # safer
+df = df.map(lambda x: x.strip() if isinstance(x, str) else x)  # safer
 
 # Map Yes/No symptoms
 binary_map = {"Yes": 1, "No": 0}

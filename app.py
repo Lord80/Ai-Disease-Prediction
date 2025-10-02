@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, send_file
 import pickle
 import numpy as np
 import pandas as pd
@@ -7,6 +7,13 @@ from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 from remedies_v2 import remedy_dict_v2
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+import io
+import os
+
 
 app = Flask(__name__)
 
@@ -339,6 +346,126 @@ def admin_history_v2():
 
     return render_template('admin_history_v2.html', history=history)
 
+@app.route('/download_report')
+def download_report():
+
+    disease = request.args.get('disease', 'Unknown')
+    confidence = request.args.get('confidence', 'N/A')
+    description = request.args.get('description', 'No description available')
+    symptoms = request.args.get('symptoms', '').split(",") if request.args.get('symptoms') else []
+    remedies = request.args.get('remedies', '').split(",") if request.args.get('remedies') else []
+    red_flags = request.args.get('red_flags', '').split(",") if request.args.get('red_flags') else []
+    username = session.get('username', 'Guest')
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # === HEADER BAR WITH LOGO + TITLE ===
+    p.setFillColor(colors.HexColor("#1a5276"))
+    p.rect(0, height - 90, width, 90, fill=1, stroke=0)
+
+    logo_path = os.path.join("static", "images", "logo.png")
+    if os.path.exists(logo_path):
+        p.drawImage(logo_path, 40, height - 80, width=60, height=60, mask='auto')
+
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 22)
+    p.drawString(120, height - 50, "AI Disease Prediction System")
+
+    # === PATIENT INFO BOX ===
+    y = height - 120
+    p.setFillColor(colors.HexColor("#f8f9f9"))
+    p.roundRect(40, y - 50, width - 80, 60, 10, fill=1, stroke=0)
+
+    p.setFillColor(colors.HexColor("#2c3e50"))
+    p.setFont("Helvetica", 12)
+    p.drawString(60, y - 20, f"👤 Patient: {username}")
+    p.drawString(320, y - 20, f"📅 Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    # === DISEASE PREDICTION ===
+    y -= 90
+    p.setFillColor(colors.HexColor("#f4f6f7"))
+    p.roundRect(40, y - 70, width - 80, 80, 10, fill=1, stroke=0)
+
+    p.setFillColor(colors.HexColor("#1a5276"))
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(60, y - 20, "Predicted Disease:")
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica", 12)
+    p.drawString(220, y - 20, disease)
+
+    p.setFillColor(colors.HexColor("#1a5276"))
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(60, y - 45, "Confidence:")
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica", 12)
+    p.drawString(220, y - 45, f"{confidence}%")
+
+    # === SECTION HELPER ===
+    def section(title, color, y):
+        p.setFillColor(color)
+        p.rect(40, y - 28, width - 80, 28, fill=1, stroke=0)
+        p.setFillColor(colors.white)
+        p.setFont("Helvetica-Bold", 13)
+        p.drawString(50, y - 17, title)
+        return y - 45
+
+    # === SUMMARY ===
+    y = section("📖 Summary", colors.HexColor("#2980b9"), y - 100)
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica", 11)
+    text = p.beginText(50, y)
+    text.setLeading(15)
+    for line in description.split(". "):
+        text.textLine(f"● {line.strip()}")
+    p.drawText(text)
+    y = text.getY() - 20
+
+    # === SYMPTOMS ===
+    if symptoms:
+        y = section("📝 Related Symptoms", colors.HexColor("#8e44ad"), y)
+        p.setFont("Helvetica", 11)
+        p.setFillColor(colors.HexColor("#2c3e50"))
+        for s in symptoms:
+            p.drawString(60, y, f"● {s.strip()}")
+            y -= 15
+        y -= 10
+
+    # === REMEDIES ===
+    if remedies:
+        y = section("✅ Suggested Remedies", colors.HexColor("#27ae60"), y)
+        p.setFont("Helvetica", 11)
+        p.setFillColor(colors.HexColor("#2c3e50"))
+        for r in remedies:
+            p.drawString(60, y, f"● {r.strip()}")
+            y -= 15
+        y -= 10
+
+    # === RED FLAGS ===
+    if red_flags:
+        y = section("⚠️ When to Seek Medical Care", colors.HexColor("#c0392b"), y)
+        p.setFont("Helvetica", 11)
+        p.setFillColor(colors.HexColor("#2c3e50"))
+        for f in red_flags:
+            p.drawString(60, y, f"● {f.strip()}")
+            y -= 15
+
+    # === FOOTER ===
+    p.setFont("Helvetica-Oblique", 9)
+    p.setFillColor(colors.HexColor("#7f8c8d"))
+    p.drawCentredString(width / 2, 30, "© 2025 AI Disease Prediction System")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True,
+                     download_name=f"prediction_report_{disease}.pdf",
+                     mimetype='application/pdf')
+
+
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -387,8 +514,9 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
+    session.clear()
     return redirect('/')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

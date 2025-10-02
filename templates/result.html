@@ -67,10 +67,22 @@
         {% endif %}
     </div>
     
-    <div class="center">
-        <a href="/predict" class="btn primary">🔄 Predict Again</a>
-        <a href="/" class="btn secondary">🏠 Back to Home</a>
-    </div>
+    <!-- Action Buttons -->
+<div class="center">
+    <a href="/predict" class="btn primary">🔄 Predict Again</a>
+    <a href="/" class="btn secondary">🏠 Back to Home</a>
+    <a href="{{ url_for('download_report',
+                        disease=disease,
+                        confidence=confidence,
+                        description=description,
+                        symptoms=','.join(symptoms),
+                        remedies=','.join(remedies),
+                        red_flags=','.join(red_flags)) }}" 
+       class="btn primary">⬇️ Download Report</a>
+</div>
+
+</div>
+
 </div>
 </body>
 </html>
