@@ -98,6 +98,11 @@ header .tagline {
 .btn.admin { background: #6a1b9a; color: white; }
 .btn.admin:hover { background: #4a148c; }
 
+.btn.danger {
+    background: #e74c3c;
+    color: #fff;
+}
+
 .btn.logout { background: #e53935; color: white; }
 .btn.logout:hover { background: #c62828; }
 
@@ -702,4 +707,42 @@ th.asc .sort-indicator::before {
 th.desc .sort-indicator::before {
   content: "↓";
   color: #fff;
+}
+
+.admin-container {
+    width: 90%;
+    margin: 30px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.admin-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.admin-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.admin-search {
+    padding: 8px 12px;
+    width: 250px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.pagination {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.pagination button {
+    margin: 0 5px;
 }

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - User Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // 🔎 Search Function
+        function filterTable() {
+            const input = document.getElementById("searchBox");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("userTable");
+            const rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+                const rowText = rows[i].textContent.toLowerCase();
+                rows[i].style.display = rowText.includes(filter) ? "" : "none";
+            }
+        }
+
+        // ✅ Confirmation
+        function confirmAction(message, url) {
+            if (confirm(message)) {
+                window.location.href = url;
+            }
+        }
+
+        // 📑 Pagination
+        let currentPage = 1;
+        const rowsPerPage = 8;
+
+        function showPage(page) {
+            const table = document.getElementById("userTable");
+            const rows = table.getElementsByTagName("tr");
+            const totalRows = rows.length - 1; // exclude header
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+
+            for (let i = 1; i < rows.length; i++) {
+                if (i > (page - 1) * rowsPerPage && i <= page * rowsPerPage) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+
+            document.getElementById("pageInfo").innerText = `Page ${page} of ${totalPages}`;
+        }
+
+        function nextPage() { showPage(currentPage + 1); }
+        function prevPage() { showPage(currentPage - 1); }
+
+        window.onload = () => showPage(1);
+    </script>
+</head>
+<body>
+<div class="admin-container">
+    <a href="/" class="back-btn">Back to Dashboard</a>
+    <h2>👥 User Management</h2>
+
+    <!-- Search -->
+    <div class="admin-toolbar">
+        <input type="text" id="searchBox" class="admin-search" onkeyup="filterTable()" placeholder="🔍 Search users...">
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+    <table id="userTable" class="table-adv wide-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <a href="javascript:void(0)" class="btn secondary"
+                       onclick="confirmAction('Reset password for {{ user.username }} to default (12345)?', '/admin/reset_password/{{ user.id }}')">
+                       Reset Password
+                    </a>
+                    <a href="javascript:void(0)" class="btn admin"
+                       onclick="confirmAction('Change role for {{ user.username }}?', '/admin/change_role/{{ user.id }}')">
+                       Change Role
+                    </a>
+                    <a href="javascript:void(0)" class="btn danger"
+                       onclick="confirmAction('Are you sure you want to delete {{ user.username }}?', '/admin/delete_user/{{ user.id }}')">
+                       Delete
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <button class="btn secondary" onclick="prevPage()">⬅ Prev</button>
+        <span id="pageInfo"></span>
+        <button class="btn secondary" onclick="nextPage()">Next ➡</button>
+    </div>
+</div>
+</body>
+</html>

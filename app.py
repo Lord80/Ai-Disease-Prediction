@@ -648,6 +648,65 @@ def login():
             return "Invalid credentials"
     return render_template('login.html')
 
+@app.route('/admin_users')
+def admin_users():
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, username, role FROM users ORDER BY id ASC")
+    users = cursor.fetchall()
+    conn.close()
+
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/reset_password/<int:user_id>')
+def reset_password(user_id):
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    new_password = generate_password_hash("12345")  # default reset
+    cursor.execute("UPDATE users SET password=%s WHERE id=%s", (new_password, user_id))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/change_role/<int:user_id>')
+def change_role(user_id):
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id=%s", (user_id,))
+    user = cursor.fetchone()
+    new_role = "admin" if user['role'] == "user" else "user"
+    cursor.execute("UPDATE users SET role=%s WHERE id=%s", (new_role, user_id))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('admin_users'))
+
+
+@app.route('/admin/delete_user/<int:user_id>')
+def delete_user(user_id):
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id=%s", (user_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('admin_users'))
+
+
 @app.route('/logout')
 def logout():
     session.clear()
