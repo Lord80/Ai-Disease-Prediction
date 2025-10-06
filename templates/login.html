@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
+    {% extends "layout.html" %}
+    {% block content %}
     <div class="container auth-container">
         <h2 class="form-title">🔑 Login</h2>
         <form method="POST" class="auth-form">
@@ -24,5 +26,6 @@
 
         <p class="redirect-text">Don’t have an account? <a href="/register" class="link">Register here</a></p>
     </div>
+    {% endblock %}
 </body>
 </html>

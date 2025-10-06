@@ -9,12 +9,12 @@
 body {
     background: linear-gradient(135deg, #4facfe, #00f2fe);
     color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
     min-height: 100vh;
-    line-height: 1.6;
+    margin: 0;
+    overflow-x: hidden;
 }
+
 
 /* Containers */
 .container {
@@ -24,7 +24,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     max-width: 800px;
-    width: 95%;
+    width: 100%;
     text-align: center;
     animation: fadeIn 1s ease-in-out;
 }
@@ -745,4 +745,211 @@ th.desc .sort-indicator::before {
 
 .pagination button {
     margin: 0 5px;
+}
+
+/* ===========================
+   PREMIUM FLOATING SIDEBAR v3
+   Replace prior sidebar CSS with this block
+   =========================== */
+
+.sidebar {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  height: calc(100% - 48px);
+  width: 260px;
+  background: linear-gradient(180deg, #071428 0%, #08263c 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(14, 165, 233, 0.12);
+  box-shadow: 0 20px 50px rgba(3, 10, 25, 0.6), 0 6px 18px rgba(14,165,233,0.06);
+  overflow: hidden;           
+  transition: transform 0.36s cubic-bezier(.2,.9,.2,1), box-shadow 0.3s ease;
+  transform: translateX(-300px);
+  z-index: 1100;
+}
+
+.sidebar.active {
+  transform: translateX(0);
+  box-shadow: 0 30px 70px rgba(3, 10, 25, 0.75), 0 8px 28px rgba(14,165,233,0.12);
+}
+.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 20px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0,213,255,0.06), rgba(58,123,213,0.03));
+  filter: blur(6px);
+  opacity: 1;
+  z-index: -1;
+}
+
+.sidebar-header {
+  padding: 26px 18px 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.profile-photo {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  margin: 0 auto;
+  background: radial-gradient(circle at 25% 20%, #00d4ff, #0ea5e9 40%, #7c3aed 100%);
+  box-shadow: 0 8px 28px rgba(12, 150, 180, 0.18);
+  display: inline-block;
+}
+
+.sidebar-menu {
+  list-style: none;
+  margin: 12px 0;
+  padding: 6px 0;
+}
+
+.sidebar-menu li {
+  margin: 6px 0;
+}
+
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  color: #cfe9f6;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border-left: 3px solid transparent;
+  transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease;
+  position: relative;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a:focus {
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.06), rgba(46, 139, 255, 0.02));
+  color: #e8fbff;
+  transform: translateX(6px);
+  border-left: 3px solid rgba(0, 212, 255, 0.8);
+}
+
+.sidebar-menu a::after {
+  content: "";
+  position: absolute;
+  left: 22px;
+  bottom: 8px;
+  height: 2px;
+  width: 0%;
+  border-radius: 4px;
+  background: linear-gradient(90deg,#00d4ff,#38bdf8);
+  transition: width 0.28s ease;
+}
+.sidebar-menu a:hover::after { width: 72%; }
+
+.sidebar-menu i,
+.icon-menu-item {
+  width: 22px;
+  height: 22px;
+  color: #9fbfcf;
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+.sidebar-menu a:hover i { color: #00d4ff; transform: scale(1.12); }
+
+.sidebar-toggle {
+  position: fixed;
+  top: 28px;
+  left: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(8, 20, 34, 0.95), rgba(6, 12, 22, 0.95));
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(3,10,25,0.6), 0 4px 12px rgba(0,212,255,0.06);
+  color: #00d4ff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 1200;
+  transition: transform 0.26s ease, left 0.36s ease, background 0.2s ease;
+}
+
+.sidebar-toggle.active {
+  left: 300px; 
+  transform: translateX(-6px) rotate(0deg);
+  background: linear-gradient(180deg, rgba(1, 18, 30, 1), rgba(0, 32, 46, 1));
+  box-shadow: 0 10px 28px rgba(0,212,255,0.14);
+  color: #a8f7ff;
+}
+
+/* Initially show hamburger, hide X */
+.icon-menu,
+.icon-close {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    pointer-events: none;
+}
+
+/* Initially show hamburger, hide X */
+.icon-menu {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+.icon-close {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+/* When sidebar toggle is active, show X and hide hamburger */
+.sidebar-toggle.active .icon-menu {
+    visibility: hidden;
+    opacity: 0;
+}
+.sidebar-toggle.active .icon-close {
+    visibility: visible;
+    opacity: 1;
+}
+
+.main-content {
+    transition: margin-left 0.36s cubic-bezier(.2,.9,.2,1);
+    margin-left: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: transparent; /* body gradient shows */
+    display: block; /* remove flex centering from main-content */
+}
+.main-content.shifted { margin-left: 320px; }
+
+/* New wrapper to center content */
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 34px;
+}
+.main-content.shifted .center-wrapper {
+    margin-left: 0; /* container stays centered */
+}
+
+.sidebar, .sidebar * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+@media (max-width: 900px) {
+  .sidebar { left: 16px; top: 18px; width: 220px; transform: translateX(-250px); }
+  .sidebar.active { transform: translateX(0); }
+  .sidebar-toggle.active { left: 250px; }
+  .main-content.shifted { margin-left: 240px; padding: 20px; }
+}
+
+@media (max-width: 520px) {
+  .sidebar { width: 200px; transform: translateX(-220px); border-radius: 14px; top: 12px; left: 12px; }
+  .sidebar-toggle { top: 14px; left: 14px; }
+  .sidebar-toggle.active { left: 220px; }
+  .main-content.shifted { margin-left: 220px; padding: 16px; }
 }

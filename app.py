@@ -712,6 +712,18 @@ def logout():
     session.clear()
     return redirect('/')
 
+@app.route('/profile')
+def profile():
+    return redirect('/')
+
+@app.route('/about')
+def about():
+    return redirect('/')
+
+@app.route('/contact')
+def contact():
+    return redirect('/')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

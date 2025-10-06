@@ -6,6 +6,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  {% extends "layout.html" %}
+    {% block content %}
   <div class="wide-container history-wrap">
     <a href="javascript:history.back()" class="back-btn">Back</a>
     <div class="history-toolbar">
@@ -100,5 +102,6 @@
       });
     })();
   </script>
+  {% endblock %}
 </body>
 </html>

@@ -7,6 +7,8 @@
     <link rel="icon" href="static/images/logo.png" type="image/jpg">
 </head>
 <body>
+    {% extends "layout.html" %}
+    {% block content %}
     <div class="container">
         <header>
             <h1><img src="static/images/logo.png" alt="AI Logo" style="height:70px; vertical-align:middle; margin-right:2px; width:80px"> AI Disease Prediction System</h1>
@@ -56,5 +58,6 @@
             <p>© 2025 AI Disease Prediction | Powered by Flask + ML</p>
         </footer>
     </div>
+    {% endblock %}
 </body>
 </html>

@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    {% extends "layout.html" %}
+    {% block content %}
     <div class="result-container-v2">
         <h2 class="result-title-v2">Prediction Results</h2>
         <p class="outcome {{ 'positive' if outcome == 'Positive' else 'negative' }}">
@@ -36,5 +38,6 @@
 
     </div>
     </div>
+    {% endblock %}
 </body>
 </html>

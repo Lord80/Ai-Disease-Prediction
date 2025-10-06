@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title if title else "AI Disease Prediction System" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- Sidebar Toggle Button -->
+  <button class="sidebar-toggle" id="sidebarToggle">
+    <i class="fa-solid fa-bars icon-menu"></i>
+    <i class="fa-solid fa-xmark icon-close"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <!-- Placeholder profile (you’ll later dynamically load user image) -->
+      <div class="profile-photo"></div>
+    </div>
+
+    <ul class="sidebar-menu">
+      <li><a href="{{ url_for('profile') }}"><i class="fa-solid fa-user"></i> Profile</a></li>
+      <li><a href="{{ url_for('index') }}"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="{{ url_for('about') }}"><i class="fa-solid fa-circle-info"></i> About</a></li>
+      <li><a href="{{ url_for('contact') }}"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-content" id="mainContent">
+  <div class="center-wrapper">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');        // sidebar slides in/out
+        sidebarToggle.classList.toggle('active'); // toggle button state
+        mainContent.classList.toggle('shifted');  // shift main content
+    });
+  </script>
+</body>
+</html>

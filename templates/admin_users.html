@@ -57,6 +57,8 @@
     </script>
 </head>
 <body>
+    {% extends "layout.html" %}
+    {% block content %}
 <div class="admin-container">
     <a href="/" class="back-btn">Back to Dashboard</a>
     <h2>👥 User Management</h2>
@@ -110,5 +112,6 @@
         <button class="btn secondary" onclick="nextPage()">Next ➡</button>
     </div>
 </div>
+{% endblock %}
 </body>
 </html>

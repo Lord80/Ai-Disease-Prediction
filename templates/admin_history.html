@@ -6,6 +6,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  {% extends "layout.html" %}
+    {% block content %}
   <div class="admin-history-wrap">
     <a href="/" class="back-btn">Go Back</a>
     <div class="history-toolbar">
@@ -90,5 +92,6 @@
       });
     });
   </script>
+  {% endblock %}
 </body>
 </html>

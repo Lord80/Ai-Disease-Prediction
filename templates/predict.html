@@ -7,6 +7,8 @@
     
   </head>
   <body>
+    {% extends "layout.html" %}
+    {% block content %}
     <div class="container predict-container">
       <a href="javascript:history.back()" class="back-btn">Back</a>
       <h2 class="form-title">🩺 Select Symptoms</h2>
@@ -50,5 +52,6 @@
         }
       }
     </script>
+    {% endblock %}
   </body>
 </html>

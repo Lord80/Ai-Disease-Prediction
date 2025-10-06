@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
+    {% extends "layout.html" %}
+    {% block content %}
     <div class="container predict-container">
         <a href="javascript:history.back()" class="back-btn">Back</a>
         <h2 class="form-title">🧬 Disease Prediction - V2</h2>
@@ -80,5 +82,6 @@
             </div>
         </form>
     </div>
+    {% endblock %}
 </body>
 </html>
