@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, send_file
+from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash
 import pickle
 import numpy as np
 import pandas as pd
@@ -601,8 +601,6 @@ def download_report_v2():
 
 
 
-
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -714,15 +712,149 @@ def logout():
 
 @app.route('/profile')
 def profile():
-    return redirect('/')
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    username = session['username']
+    conn = get_db_connection()
+    user = {}
+    total_predictions = 0
+    last_prediction = None
+    join_date = '—'
+    account_type = session.get('role', 'User')
+
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+
+            # 1️⃣ Fetch user info
+            cursor.execute("""
+                SELECT username, role, created_at, email, phone, location
+                FROM users WHERE username = %s
+            """, (username,))
+            user = cursor.fetchone() or {}
+
+            # 2️⃣ Total predictions (combined)
+            cursor.execute("""
+                SELECT 
+                    (SELECT COUNT(*) FROM history WHERE username=%s)
+                    + 
+                    (SELECT COUNT(*) FROM prediction_history WHERE username=%s)
+                    AS total_predictions
+            """, (username, username))
+            total_predictions = cursor.fetchone()['total_predictions']
+
+            # 3️⃣ Last prediction date (newest of both tables)
+            cursor.execute("""
+                SELECT MAX(ts) AS last_pred FROM (
+                    SELECT timestamp AS ts FROM history WHERE username=%s
+                    UNION ALL
+                    SELECT predicted_at AS ts FROM prediction_history WHERE username=%s
+                ) AS combined
+            """, (username, username))
+            result = cursor.fetchone()
+            last_dt = result['last_pred'] if result else None
+            last_prediction = last_dt.strftime("%b %d, %Y %I:%M %p") if last_dt else "—"
+
+            # 4️⃣ Join date
+            join_date = user.get('created_at')
+            if join_date:
+                try:
+                    join_date = join_date.strftime("%b %d, %Y")
+                except:
+                    join_date = str(join_date)
+            else:
+                join_date = "—"
+
+        except Exception as e:
+            print("PROFILE ERROR:", e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    return render_template(
+        "profile.html",
+        username=username,
+        role=user.get("role", "User").capitalize(),
+        join_date=join_date,
+        total_predictions=total_predictions,
+        last_prediction=last_prediction,
+        email=user.get("email", ""),
+        phone=user.get("phone", ""),
+        location=user.get("location", "")
+    )
+
+
 
 @app.route('/about')
 def about():
-    return redirect('/')
+    return render_template("about.html")
 
-@app.route('/contact')
+
+@app.route('/contact', methods=["GET", "POST"])
 def contact():
-    return redirect('/')
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        message = request.form.get("message")
+        username = session.get("username", "Guest")
+
+        if not all([name, email, message]):
+            flash("⚠️ Please fill all fields.", "danger")
+            return redirect(url_for("contact"))
+
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO contact_messages (username, name, email, message, created_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (username, name, email, message, datetime.now()))
+                conn.commit()
+                flash("✅ Message sent successfully!", "success")
+            except Exception as e:
+                print("CONTACT ERROR:", e)
+                flash("❌ Error saving message. Try again later.", "danger")
+            finally:
+                cursor.close()
+                conn.close()
+        else:
+            flash("❌ Database connection error.", "danger")
+
+        return redirect(url_for("contact"))
+
+    return render_template("contact.html")
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    username = session['username']
+    email = request.form.get('email', '')
+    phone = request.form.get('phone', '')
+    location = request.form.get('location', '')
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET email=%s, phone=%s, location=%s
+                WHERE username=%s
+            """, (email, phone, location, username))
+            conn.commit()
+            flash("✅ Profile updated successfully!", "success")
+        except Exception as e:
+            print("UPDATE PROFILE ERROR:", e)
+            flash("❌ Failed to update profile.", "danger")
+        finally:
+            cursor.close()
+            conn.close()
+
+    return redirect(url_for('profile'))
 
 
 if __name__ == '__main__':

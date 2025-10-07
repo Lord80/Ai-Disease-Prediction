@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+  /* ✨ Edit Profile Form Animation */
+  #editProfile {
+    display: none;
+    max-width: 80%;
+    margin: 20px auto;
+    opacity: 0;
+    transform: translateY(-15px);
+    transition: all 0.4s ease-in-out;
+  }
+
+  #editProfile.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .btn-cancel {
+    background-color: #f44336;
+    color: white;
+  }
+
+  .btn-cancel:hover {
+    background-color: #d32f2f;
+  }
+</style>
+
+<script>
+  function toggleEdit() {
+    const form = document.getElementById("editProfile");
+    if (form.classList.contains("show")) {
+      form.classList.remove("show");
+      setTimeout(() => (form.style.display = "none"), 400);
+    } else {
+      form.style.display = "block";
+      setTimeout(() => form.classList.add("show"), 10);
+      window.scrollTo({ top: form.offsetTop - 100, behavior: "smooth" });
+    }
+  }
+</script>
+
+<div class="profile-dashboard pro-wide">
+
+  <!-- 🧑‍💻 Profile Banner -->
+  <section class="profile-banner">
+    <div class="banner-left">
+      <img src="{{ url_for('static', filename='images/default_avatar.png') }}" class="avatar-banner" alt="User Avatar">
+      <div>
+        <h1 class="profile-name">{{ username }}</h1>
+        <span class="profile-role">{{ role }}</span>
+        <p class="profile-join"><i class="fa-regular fa-calendar"></i> Joined {{ join_date }}</p>
+      </div>
+    </div>
+
+    <div class="banner-right">
+      <a href="{{ url_for('view_history') }}" class="btn banner-btn">
+        <i class="fa-solid fa-clock-rotate-left"></i> View Full History
+      </a>
+
+      {% if role == "Admin" %}
+      <a href="{{ url_for('admin_users') }}" class="btn banner-btn secondary">
+        <i class="fa-solid fa-user-gear"></i> Manage Users
+      </a>
+      {% endif %}
+
+      <button class="btn banner-btn secondary" onclick="toggleEdit()">
+        <i class="fa-solid fa-user-pen"></i> Edit Profile
+      </button>
+    </div>
+  </section>
+
+  <!-- 📊 Statistic Cards -->
+  <section class="profile-stats-row">
+    <div class="stat-box gradient-blue">
+      <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="stat-details">
+        <h3>Total Predictions</h3>
+        <p>{{ total_predictions }}</p>
+      </div>
+    </div>
+
+    <div class="stat-box gradient-green">
+      <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+      <div class="stat-details">
+        <h3>Last Prediction</h3>
+        <p>{{ last_prediction }}</p>
+      </div>
+    </div>
+
+    <div class="stat-box gradient-purple">
+      <div class="stat-icon"><i class="fa-solid fa-id-card-clip"></i></div>
+      <div class="stat-details">
+        <h3>Account Type</h3>
+        <p>{{ role }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🪪 Personal Info -->
+  <section class="profile-info-card">
+    <h2><i class="fa-solid fa-circle-info"></i> Personal Information</h2>
+    <div class="info-grid">
+      <div class="info-item"><strong>Email:</strong> {{ email or '—' }}</div>
+      <div class="info-item"><strong>Phone:</strong> {{ phone or '—' }}</div>
+      <div class="info-item"><strong>Location:</strong> {{ location or '—' }}</div>
+    </div>
+  </section>
+
+  <!-- ✏️ Edit Profile Form (Animated + Cancel Button) -->
+  <div id="editProfile" class="card shadow-sm p-4 rounded-3">
+    <h5 class="mb-3 fw-bold text-primary">Edit Profile</h5>
+    <form action="{{ url_for('update_profile') }}" method="POST" class="needs-validation" novalidate>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" id="username" name="username" class="form-control" 
+                 value="{{ username }}" readonly>
+        </div>
+
+        <div class="col-md-6">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" name="email" value="{{ email }}" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <label for="phone" class="form-label">Phone</label>
+          <input type="text" name="phone" value="{{ phone }}" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <label for="location" class="form-label">Location</label>
+          <input type="text" name="location" value="{{ location }}" class="form-control">
+        </div>
+      </div>
+
+      <div class="edit-buttons mt-4">
+        <button type="button" class="btn btn-cancel" onclick="toggleEdit()">❌ Cancel</button>
+        <button type="submit" class="btn btn-success px-4">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ⚙️ Footer -->
+  <footer class="profile-footer mt-5">
+    © 2025 AI Disease Prediction | Powered by Flask + ML
+  </footer>
+
+</div>
+
+{% endblock %}

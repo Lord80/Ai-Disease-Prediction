@@ -33,6 +33,15 @@
   <!-- Main Content Area -->
   <div class="main-content" id="mainContent">
   <div class="center-wrapper">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap">
+        {% for category, msg in messages %}
+          <div class="flash flash-{{ category }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
     {% block content %}{% endblock %}
   </div>
 </div>
