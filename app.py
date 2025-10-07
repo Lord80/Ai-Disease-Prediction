@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash, Response, jsonify
 import pickle
 import numpy as np
 import pandas as pd
@@ -15,6 +15,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import Paragraph
 import io
 import os
+import csv
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -40,6 +42,18 @@ def get_db_connection():
     except Error as e:
         print(f"[DB] Connection error: {e}")
         return None
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'username' not in session:
+            return redirect(url_for('login'))
+        # role may be lowercase/uppercase depending on DB; normalize
+        role = session.get('role') or ''
+        if str(role).lower() != 'admin':
+            return "Access denied", 403
+        return f(*args, **kwargs)
+    return decorated
 
 
 # load model 1
@@ -646,18 +660,18 @@ def login():
             return "Invalid credentials"
     return render_template('login.html')
 
-@app.route('/admin_users')
-def admin_users():
-    if 'username' not in session or session.get('role') != 'admin':
-        return redirect(url_for('login'))
+# @app.route('/admin_users')
+# def admin_users():
+#     if 'username' not in session or session.get('role') != 'admin':
+#         return redirect(url_for('login'))
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, username, role FROM users ORDER BY id ASC")
-    users = cursor.fetchall()
-    conn.close()
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+#     cursor.execute("SELECT id, username, role FROM users ORDER BY id ASC")
+#     users = cursor.fetchall()
+#     conn.close()
 
-    return render_template('admin_users.html', users=users)
+#     return render_template('admin_users.html', users=users)
 
 @app.route('/admin/reset_password/<int:user_id>')
 def reset_password(user_id):
@@ -855,6 +869,182 @@ def update_profile():
             conn.close()
 
     return redirect(url_for('profile'))
+
+@app.route('/admin/users')
+@admin_required
+def admin_users_enhanced():
+    """
+    Show enhanced user management UI: filtering, sorting, pagination.
+    Query params:
+      - q: search query (username/email)
+      - role: user/admin
+      - active: 1/0
+      - page: int
+    """
+    q = request.args.get('q', '').strip()
+    role_filter = request.args.get('role', '').strip()
+    active_filter = request.args.get('active', '').strip()
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    conn = get_db_connection()
+    users = []
+    total = 0
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+            base = "SELECT SQL_CALC_FOUND_ROWS id, username, role, created_at, email, phone, location, active, last_login FROM users WHERE 1=1"
+            params = []
+            if q:
+                base += " AND (username LIKE %s OR email LIKE %s)"
+                params.extend([f"%{q}%", f"%{q}%"])
+            if role_filter:
+                base += " AND role = %s"
+                params.append(role_filter)
+            if active_filter in ('0', '1'):
+                base += " AND active = %s"
+                params.append(active_filter)
+
+            base += " ORDER BY id ASC LIMIT %s OFFSET %s"
+            params.extend([per_page, offset])
+
+            cursor.execute(base, tuple(params))
+            users = cursor.fetchall()
+
+            cursor.execute("SELECT FOUND_ROWS() AS total")
+            total = cursor.fetchone().get('total', 0)
+        except Exception as e:
+            print("[ADMIN USERS] DB error:", e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total else 1
+    return render_template('admin_users_enhanced.html',
+                           users=users,
+                           page=page,
+                           total_pages=total_pages,
+                           q=q,
+                           role_filter=role_filter,
+                           active_filter=active_filter,
+                           total=total)
+
+@app.route('/admin/user/<int:user_id>/edit', methods=['POST'])
+@admin_required
+def admin_edit_user(user_id):
+    # allow admin to update email/phone/location/role/active
+    email = request.form.get('email') or ''
+    phone = request.form.get('phone') or ''
+    location = request.form.get('location') or ''
+    role = request.form.get('role') or 'user'
+    active = 1 if request.form.get('active') == '1' else 0
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET email=%s, phone=%s, location=%s, role=%s, active=%s
+                WHERE id=%s
+            """, (email, phone, location, role, active, user_id))
+            conn.commit()
+            flash("✅ User updated.", "success")
+        except Exception as e:
+            print("[ADMIN EDIT USER] Error:", e)
+            flash("❌ Failed to update user.", "danger")
+        finally:
+            cursor.close()
+            conn.close()
+    return redirect(url_for('admin_users_enhanced'))
+
+@app.route('/admin/user/<int:user_id>/toggle_active')
+@admin_required
+def admin_toggle_active(user_id):
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT active FROM users WHERE id=%s", (user_id,))
+            row = cursor.fetchone()
+            if row is None:
+                flash("User not found.", "danger")
+                return redirect(url_for('admin_users_enhanced'))
+            new_active = 0 if row['active'] == 1 else 1
+            cursor.execute("UPDATE users SET active=%s WHERE id=%s", (new_active, user_id))
+            conn.commit()
+            flash("✅ User status updated.", "success")
+        except Exception as e:
+            print("[ADMIN TOGGLE ACTIVE] Error:", e)
+            flash("❌ Failed to update status.", "danger")
+        finally:
+            cursor.close()
+            conn.close()
+    return redirect(url_for('admin_users_enhanced'))
+
+@app.route('/admin/user/<int:user_id>/reset_password')
+@admin_required
+def admin_reset_password(user_id):
+    # set default password to '12345' (hashed)
+    try:
+        new_hash = generate_password_hash("12345")
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET password=%s WHERE id=%s", (new_hash, user_id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            flash("✅ Password reset to default (12345).", "success")
+    except Exception as e:
+        print("[ADMIN RESET PW] Error:", e)
+        flash("❌ Failed to reset password.", "danger")
+    return redirect(url_for('admin_users_enhanced'))
+
+@app.route('/admin/users/export')
+@admin_required
+def admin_export_users():
+    q = request.args.get('q', '').strip()
+    role_filter = request.args.get('role', '').strip()
+    active_filter = request.args.get('active', '').strip()
+
+    conn = get_db_connection()
+    rows = []
+    if conn:
+        try:
+            cursor = conn.cursor()
+            base = "SELECT id, username, role, email, phone, location, active, created_at, last_login FROM users WHERE 1=1"
+            params = []
+            if q:
+                base += " AND (username LIKE %s OR email LIKE %s)"
+                params.extend([f"%{q}%", f"%{q}%"])
+            if role_filter:
+                base += " AND role = %s"
+                params.append(role_filter)
+            if active_filter in ('0', '1'):
+                base += " AND active = %s"
+                params.append(active_filter)
+            base += " ORDER BY id ASC"
+            cursor.execute(base, tuple(params))
+            rows = cursor.fetchall()
+        except Exception as e:
+            print("[ADMIN EXPORT] Error:", e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    # Generate CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    header = ['id', 'username', 'role', 'email', 'phone', 'location', 'active', 'created_at', 'last_login']
+    writer.writerow(header)
+    for row in rows:
+        writer.writerow(row)
+
+    response = Response(output.getvalue(), mimetype='text/csv')
+    response.headers['Content-Disposition'] = 'attachment; filename=users_export.csv'
+    return response
 
 
 if __name__ == '__main__':

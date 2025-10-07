@@ -1,20 +1,134 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container about-container">
-  <h1 class="page-title">ℹ️ About the Project</h1>
-  <p>
-    The <strong>AI Disease Prediction System</strong> is designed to predict possible diseases based on symptoms and clinical data using machine learning.
-    It uses intelligent algorithms trained on medical datasets to help users get quick insights before consulting a doctor.
-  </p>
 
-  <h3>⚙️ Technologies Used</h3>
-  <ul class="list">
-    <li>Python (Flask Framework)</li>
-    <li>Machine Learning (scikit-learn, Pandas, NumPy)</li>
-    <li>MySQL Database</li>
-    <li>HTML, CSS, and JavaScript</li>
-  </ul>
+<div class="about-page">
 
-  <footer>© 2025 AI Disease Prediction | Powered by Flask + ML</footer>
+  <!-- Hero Section -->
+  <section class="about-hero">
+    <div class="hero-content">
+      <h1><i class="fa-solid fa-microscope"></i> AI Disease Prediction System</h1>
+      <p>
+        Empowering healthcare through artificial intelligence.  
+        Our platform analyzes medical data to help predict possible diseases early,  
+        making preventive healthcare smarter, faster, and more accessible.
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission & Vision -->
+  <section class="about-mission fade-in">
+    <div class="mission-grid">
+      <div class="mission-card">
+        <i class="fa-solid fa-bullseye"></i>
+        <h3>Our Mission</h3>
+        <p>
+          To harness the power of AI and data science to support healthcare professionals 
+          and patients in understanding potential risks early — driving proactive care decisions.
+        </p>
+      </div>
+      <div class="mission-card">
+        <i class="fa-solid fa-eye"></i>
+        <h3>Our Vision</h3>
+        <p>
+          To create an intelligent health ecosystem that integrates human expertise 
+          with machine precision, ensuring better lives through technology.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technologies Section -->
+  <section class="about-tech fade-in">
+    <h2><i class="fa-solid fa-gears"></i> Technologies Behind the System</h2>
+    <div class="tech-grid">
+      <div class="tech-item"><i class="fa-brands fa-python"></i><span>Python (Flask)</span></div>
+      <div class="tech-item"><i class="fa-solid fa-brain"></i><span>Machine Learning</span></div>
+      <div class="tech-item"><i class="fa-solid fa-database"></i><span>MySQL</span></div>
+      <div class="tech-item"><i class="fa-brands fa-html5"></i><span>HTML5 / CSS3</span></div>
+      <div class="tech-item"><i class="fa-brands fa-square-js"></i><span>JavaScript</span></div>
+      <div class="tech-item"><i class="fa-solid fa-chart-line"></i><span>Data Analytics</span></div>
+      <div class="tech-item"><i class="fa-solid fa-cloud"></i><span>Flask Deployment</span></div>
+      <div class="tech-item"><i class="fa-solid fa-lock"></i><span>Secure Sessions</span></div>
+    </div>
+  </section>
+
+  <!-- Project Journey Timeline -->
+  <section class="about-timeline fade-in">
+    <h2><i class="fa-solid fa-route"></i> Project Journey</h2>
+    <ul class="timeline">
+      <li><span>🔍</span> Researched medical datasets and ML models for disease classification.</li>
+      <li><span>🧠</span> Trained AI models using scikit-learn and optimized for accuracy.</li>
+      <li><span>💻</span> Designed a responsive and accessible Flask-based web interface.</li>
+      <li><span>📊</span> Integrated user dashboards and live prediction analytics.</li>
+      <li><span>🌐</span> Deployed and optimized the app for real-world use cases.</li>
+    </ul>
+  </section>
+
+  <!-- Team Section -->
+  <section class="about-team fade-in">
+    <h2><i class="fa-solid fa-users"></i> Meet the Team</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <img src="{{ url_for('static', filename='images/team1.jpg') }}" alt="Team Member">
+        <h4>Dr. A. Kumar</h4>
+        <p>Lead AI Researcher</p>
+      </div>
+      <div class="team-card">
+        <img src="{{ url_for('static', filename='images/team2.jpg') }}" alt="Team Member">
+        <h4>Priya Sharma</h4>
+        <p>Data Scientist</p>
+      </div>
+      <div class="team-card">
+        <img src="{{ url_for('static', filename='images/team3.jpg') }}" alt="Team Member">
+        <h4>Rahul Verma</h4>
+        <p>Full Stack Developer</p>
+      </div>
+      <div class="team-card">
+        <img src="{{ url_for('static', filename='images/team4.jpg') }}" alt="Team Member">
+        <h4>Sneha Patel</h4>
+        <p>UI/UX Designer</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Values Section -->
+  <section class="about-values fade-in">
+    <h2><i class="fa-solid fa-lightbulb"></i> Our Core Values</h2>
+    <div class="values-grid">
+      <div class="value-card">
+        <i class="fa-solid fa-hand-holding-heart"></i>
+        <h4>Ethical AI</h4>
+        <p>We prioritize fairness, transparency, and responsible AI development.</p>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-people-group"></i>
+        <h4>Collaboration</h4>
+        <p>Interdisciplinary teamwork between developers, data scientists, and healthcare experts.</p>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-chart-simple"></i>
+        <h4>Data Integrity</h4>
+        <p>We ensure data confidentiality and accuracy throughout the prediction process.</p>
+      </div>
+      <div class="value-card">
+        <i class="fa-solid fa-seedling"></i>
+        <h4>Innovation</h4>
+        <p>We constantly explore emerging AI technologies to advance healthcare solutions.</p>
+      </div>
+    </div>
+  </section>
+  <br>
+
+  <!-- Closing Note -->
+  <section class="about-footer fade-in">
+    <h3><i class="fa-solid fa-handshake"></i> Together for a Smarter Tomorrow</h3>
+    <p>
+      The AI Disease Prediction System is not just a project — it’s a vision for the future of healthcare.  
+      Join us as we continue to innovate and push the boundaries of what’s possible with artificial intelligence.
+    </p>
+    <footer>© 2025 AI Disease Prediction | Powered by Flask + ML</footer>
+  </section>
+
 </div>
+
 {% endblock %}

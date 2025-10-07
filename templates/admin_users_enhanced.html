@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="admin-container">
+  <a href="/" class="back-btn">Back to Dashboard</a>
+  <h2 class="admin-history-title">👥 User Management — Enhanced</h2>
+
+  <div class="admin-toolbar" style="display:flex; gap:12px; align-items:center; margin-bottom:18px;">
+    <input id="searchInput" type="text" placeholder="🔍 Search username or email..." class="admin-search" value="{{ q }}">
+    <select id="roleFilter" class="admin-search" style="width:160px;">
+      <option value="">All roles</option>
+      <option value="user" {% if role_filter=='user' %}selected{% endif %}>User</option>
+      <option value="admin" {% if role_filter=='admin' %}selected{% endif %}>Admin</option>
+    </select>
+    <select id="activeFilter" class="admin-search" style="width:140px;">
+      <option value="">All status</option>
+      <option value="1" {% if active_filter=='1' %}selected{% endif %}>Active</option>
+      <option value="0" {% if active_filter=='0' %}selected{% endif %}>Deactivated</option>
+    </select>
+    <button class="btn secondary" onclick="applyFilters()">Apply</button>
+    <a id="exportBtn" class="btn admin" style="margin-left:auto;" href="{{ url_for('admin_export_users', q=q, role=role_filter, active=active_filter) }}">Export CSV</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table-adv wide-table" id="usersTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Location</th>
+          <th>Active</th>
+          <th>Last Login</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr data-id="{{ u.id }}">
+          <td>{{ u.id }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.role }}</td>
+          <td>{{ u.email or '—' }}</td>
+          <td>{{ u.phone or '—' }}</td>
+          <td>{{ u.location or '—' }}</td>
+          <td>{% if u.active == 1 %}<span class="chip chip-green">Active</span>{% else %}<span class="chip chip-red">Inactive</span>{% endif %}</td>
+          <td>{{ u.last_login or '—' }}</td>
+          <td>{{ u.created_at }}</td>
+          <td>
+            <button class="btn secondary" onclick="openEditModal({{ u.id }})">Edit</button>
+            <a href="{{ url_for('admin_toggle_active', user_id=u.id) }}" class="btn btn-cancel" onclick="return confirm('Toggle active status?')">Toggle</a>
+            <a href="{{ url_for('admin_reset_password', user_id=u.id) }}" class="btn danger" onclick="return confirm('Reset password to default?')">Reset PW</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div style="text-align:center; margin-top:12px;">
+    {% if page > 1 %}
+      <a class="btn secondary" href="{{ url_for('admin_users_enhanced', q=q, role=role_filter, active=active_filter, page=page-1) }}">⬅ Prev</a>
+    {% endif %}
+    <span style="margin: 0 12px">Page {{ page }} of {{ total_pages }} — {{ total }} users</span>
+    {% if page < total_pages %}
+      <a class="btn secondary" href="{{ url_for('admin_users_enhanced', q=q, role=role_filter, active=active_filter, page=page+1) }}">Next ➡</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Edit Modal (hidden) -->
+<div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:2000; align-items:center; justify-content:center;">
+  <div style="width:760px; max-width:95%; background:#fff; border-radius:12px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <h3>Edit User</h3>
+    <form id="editForm" method="POST" action="">
+      <input type="hidden" name="_method" value="post">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label>Username</label>
+          <input type="text" id="edit_username" name="username" class="form-control" readonly>
+        </div>
+        <div>
+          <label>Role</label>
+          <select id="edit_role" name="role" class="form-control">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="edit_email" name="email" class="form-control">
+        </div>
+        <div>
+          <label>Phone</label>
+          <input type="text" id="edit_phone" name="phone" class="form-control">
+        </div>
+        <div>
+          <label>Location</label>
+          <input type="text" id="edit_location" name="location" class="form-control">
+        </div>
+        <div>
+          <label>Active</label>
+          <select id="edit_active" name="active" class="form-control">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function applyFilters(){
+    const q = document.getElementById('searchInput').value;
+    const role = document.getElementById('roleFilter').value;
+    const active = document.getElementById('activeFilter').value;
+    const url = new URL(window.location.href.split('?')[0], window.location.origin);
+    if(q) url.searchParams.set('q', q);
+    if(role) url.searchParams.set('role', role);
+    if(active) url.searchParams.set('active', active);
+    window.location.href = url.toString();
+  }
+
+  // open edit modal and fetch row values
+  function openEditModal(userId){
+    const tr = document.querySelector('tr[data-id="'+userId+'"]');
+    if(!tr) return alert('Row not found');
+    document.getElementById('edit_username').value = tr.children[1].innerText.trim();
+    document.getElementById('edit_role').value = tr.children[2].innerText.trim() || 'user';
+    document.getElementById('edit_email').value = tr.children[3].innerText.trim() === '—' ? '' : tr.children[3].innerText.trim();
+    document.getElementById('edit_phone').value = tr.children[4].innerText.trim() === '—' ? '' : tr.children[4].innerText.trim();
+    document.getElementById('edit_location').value = tr.children[5].innerText.trim() === '—' ? '' : tr.children[5].innerText.trim();
+    document.getElementById('edit_active').value = tr.children[6].innerText.trim().toLowerCase() === 'active' ? '1' : '0';
+
+    const form = document.getElementById('editForm');
+    form.action = `/admin/user/${userId}/edit`;
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeEditModal(){
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  // close modal on ESC
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeEditModal();
+  });
+</script>
+
+{% endblock %}
