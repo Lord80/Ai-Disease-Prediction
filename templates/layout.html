@@ -16,8 +16,29 @@
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="profile-photo"></div>
+    <div class="sidebar-header" style="text-align:center; padding: 15px 10px;">
+      <!-- ✅ Display current profile photo -->
+      {% if session.get('profile_photo') %}
+        <img src="{{ url_for('static', filename=session['profile_photo']) }}" 
+             alt="Profile Photo" 
+             class="avatar-sidebar" 
+             style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;">
+      {% else %}
+        <img src="{{ url_for('static', filename='images/default_avatar.png') }}" 
+             alt="Default Photo" 
+             class="avatar-sidebar" 
+             style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;">
+      {% endif %}
+
+      <!-- ✅ Profile upload form -->
+      <form action="{{ url_for('update_profile') }}" method="POST" enctype="multipart/form-data" style="margin-top: 5px;">
+        <input type="file" name="profile_photo" id="profile_photo" 
+               accept="image/*" style="display:block; margin: 0 auto 8px auto; width: 90%;">
+        <button type="submit" class="upload-btn" 
+                style="background: #4e9cde; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+          Update
+        </button>
+      </form>
     </div>
 
     <ul class="sidebar-menu">

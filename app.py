@@ -18,6 +18,7 @@ import io
 import os
 import csv
 from functools import wraps
+from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__)
@@ -30,6 +31,12 @@ except Exception as e:
     print(f"[WARN] Could not load disease_info: {e}")
     disease_info_map = {}
 
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_db_connection():
     try:
@@ -760,7 +767,7 @@ def profile():
 
             # 1️⃣ Fetch user info
             cursor.execute("""
-                SELECT username, role, created_at, email, phone, location
+                SELECT username, role, created_at, email, phone, location, profile_photo
                 FROM users WHERE username = %s
             """, (username,))
             user = cursor.fetchone() or {}
@@ -812,9 +819,9 @@ def profile():
         last_prediction=last_prediction,
         email=user.get("email", ""),
         phone=user.get("phone", ""),
-        location=user.get("location", "")
+        location=user.get("location", ""),
+        profile_photo=user.get("profile_photo")
     )
-
 
 
 @app.route('/about')
@@ -857,35 +864,57 @@ def contact():
 
     return render_template("contact.html")
 
-@app.route('/update_profile', methods=['POST'])
+@app.route("/update_profile", methods=["POST"])
 def update_profile():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        flash("Please log in to update your profile.", "error")
+        return redirect(url_for("login"))
 
     username = session['username']
-    email = request.form.get('email', '')
-    phone = request.form.get('phone', '')
-    location = request.form.get('location', '')
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    location = request.form.get("location")
+
+    file = request.files.get("profile_photo")
+    profile_photo_path = None
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        profile_photo_path = f"uploads/{filename}"
 
     conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE users
-                SET email=%s, phone=%s, location=%s
-                WHERE username=%s
-            """, (email, phone, location, username))
-            conn.commit()
-            flash("✅ Profile updated successfully!", "success")
-        except Exception as e:
-            print("UPDATE PROFILE ERROR:", e)
-            flash("❌ Failed to update profile.", "danger")
-        finally:
-            cursor.close()
-            conn.close()
+    cursor = conn.cursor()
 
-    return redirect(url_for('profile'))
+    try:
+        if profile_photo_path:
+            query = """UPDATE users 
+                       SET email=%s, phone=%s, location=%s, profile_photo=%s 
+                       WHERE username=%s"""
+            cursor.execute(query, (email, phone, location, profile_photo_path, username))
+
+            # 🧩 Save in session so sidebar updates instantly
+            session['profile_photo'] = profile_photo_path
+
+        else:
+            query = """UPDATE users 
+                       SET email=%s, phone=%s, location=%s 
+                       WHERE username=%s"""
+            cursor.execute(query, (email, phone, location, username))
+
+        conn.commit()
+        flash("Profile updated successfully!", "success")
+
+    except Error as e:
+        print(f"[DB ERROR] {e}")
+        flash("Error updating profile.", "error")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("profile"))
 
 @app.route('/admin/users')
 @admin_required
@@ -1344,7 +1373,6 @@ def admin_export_contacts_csv():
     resp.headers["Content-Type"] = "text/csv"
     log_audit(session.get('username'), "Exported contact messages CSV", request.remote_addr)
     return resp
-
 
 
 if __name__ == '__main__':
