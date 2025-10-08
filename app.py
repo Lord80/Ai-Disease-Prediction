@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash, Response, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash, Response, jsonify, make_response
 import pickle
 import numpy as np
 import pandas as pd
@@ -43,6 +43,35 @@ def get_db_connection():
     except Error as e:
         print(f"[DB] Connection error: {e}")
         return None
+
+def log_audit(username, action, ip=None, status="OK"):
+    """
+    Insert an entry into audit_log table.
+    audit_log schema: id, username, action, ip_address, status, created_at
+    """
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return
+        cursor = conn.cursor()
+        if ip is None:
+            ip = request.remote_addr if request else None
+        insert_sql = """
+            INSERT INTO audit_log (username, action, ip_address, status, created_at)
+            VALUES (%s, %s, %s, %s, NOW())
+        """
+        cursor.execute(insert_sql, (username, action, ip or '', status))
+        conn.commit()
+    except Exception as e:
+        # don't break admin flows on logging failure; just print
+        print("[AUDIT] logging failed:", e)
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
 
 def admin_required(f):
     @wraps(f)
@@ -1133,8 +1162,8 @@ def admin_dashboard():
     top_labels = [td['disease'] for td in top_diseases]
     top_counts = [td['count'] for td in top_diseases]
 
-    print("===DEBUG=== dates:", chart_dates)
-    print("===DEBUG=== counts:", chart_counts)
+    # print("===DEBUG=== dates:", chart_dates)
+    # print("===DEBUG=== counts:", chart_counts)
 
     return render_template('admin_dashboard.html',
                            total_users=total_users,
@@ -1145,6 +1174,177 @@ def admin_dashboard():
                            top_labels=json.dumps(top_labels),
                            top_counts=json.dumps(top_counts),
                            top_diseases=top_diseases)
+
+@app.route('/admin/system')
+@admin_required
+def admin_system():
+    conn = get_db_connection()
+    contact_messages = []
+    audit_logs = []
+    counts = {
+        "users": 0,
+        "predictions": 0,
+        "contacts": 0,
+        "audit": 0
+    }
+
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+
+            # contact messages (most recent first)
+            cursor.execute("SELECT id, username, name, email, message, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 200")
+            contact_messages = cursor.fetchall()
+
+            # audit log (recent)
+            cursor.execute("SELECT id, username, action, ip_address, status, created_at FROM audit_log ORDER BY created_at DESC LIMIT 200")
+            audit_logs = cursor.fetchall()
+
+            # quick counts
+            cursor.execute("SELECT COUNT(*) AS cnt FROM users")
+            counts['users'] = cursor.fetchone()['cnt'] if cursor.fetchone() is None else counts['users']
+            # Since fetchone() consumed the row, safer to run separate queries:
+            cursor.execute("SELECT COUNT(*) AS cnt FROM users")
+            r = cursor.fetchone()
+            counts['users'] = r['cnt'] if r else 0
+
+            cursor.execute("SELECT COUNT(*) AS cnt FROM prediction_history")
+            r = cursor.fetchone()
+            counts['predictions'] = r['cnt'] if r else 0
+
+            cursor.execute("SELECT COUNT(*) AS cnt FROM contact_messages")
+            r = cursor.fetchone()
+            counts['contacts'] = r['cnt'] if r else 0
+
+            cursor.execute("SELECT COUNT(*) AS cnt FROM audit_log")
+            r = cursor.fetchone()
+            counts['audit'] = r['cnt'] if r else 0
+
+        except Exception as e:
+            print("[ADMIN SYSTEM] DB error:", e)
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except:
+                pass
+
+    return render_template('admin_system.html',
+                           contact_messages=contact_messages,
+                           audit_logs=audit_logs,
+                           counts=counts)
+
+
+@app.route('/admin/delete_message/<int:msg_id>', methods=['POST'])
+@admin_required
+def admin_delete_message(msg_id):
+    username = session.get('username', 'admin')
+    conn = get_db_connection()
+    deleted = False
+    if conn:
+        try:
+            cursor = conn.cursor()
+            # get message for logging (optional)
+            cursor.execute("SELECT id, name, email, message FROM contact_messages WHERE id = %s", (msg_id,))
+            row = cursor.fetchone()
+            if row:
+                cursor.execute("DELETE FROM contact_messages WHERE id = %s", (msg_id,))
+                conn.commit()
+                deleted = True
+        except Exception as e:
+            print("[ADMIN DELETE MSG] error:", e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    if deleted:
+        log_audit(username, f"Deleted contact message id={msg_id}", request.remote_addr, status="OK")
+        flash("Message deleted successfully.", "success")
+    else:
+        log_audit(username, f"Tried to delete contact message id={msg_id} (not found)", request.remote_addr, status="FAILED")
+        flash("Message not found or could not be deleted.", "danger")
+
+    return redirect(url_for('admin_system'))
+
+
+# Export users CSV
+@app.route('/admin/export_users_csv')
+@admin_required
+def admin_export_users_csv():
+    conn = get_db_connection()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "username", "role", "email", "phone", "location", "created_at"])
+
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, username, role, email, phone, location, created_at FROM users")
+            for row in cursor.fetchall():
+                writer.writerow(row)
+        finally:
+            cursor.close()
+            conn.close()
+
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Disposition"] = "attachment; filename=users_export.csv"
+    resp.headers["Content-Type"] = "text/csv"
+    log_audit(session.get('username'), "Exported users CSV", request.remote_addr)
+    return resp
+
+
+# Export predictions CSV
+@app.route('/admin/export_predictions_csv')
+@admin_required
+def admin_export_predictions_csv():
+    conn = get_db_connection()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    # select useful fields
+    writer.writerow(["id","username","fever","cough","fatigue","breathing","age","gender","bp","cholesterol","top1","top2","top3","outcome","predicted_at"])
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""SELECT id, username, fever, cough, fatigue, breathing, age, gender, bp, cholesterol,
+                              top_disease_1, top_disease_2, top_disease_3, outcome, predicted_at
+                              FROM prediction_history""")
+            for row in cursor.fetchall():
+                writer.writerow(row)
+        finally:
+            cursor.close()
+            conn.close()
+
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Disposition"] = "attachment; filename=predictions_export.csv"
+    resp.headers["Content-Type"] = "text/csv"
+    log_audit(session.get('username'), "Exported predictions CSV", request.remote_addr)
+    return resp
+
+
+# Export contacts CSV
+@app.route('/admin/export_contacts_csv')
+@admin_required
+def admin_export_contacts_csv():
+    conn = get_db_connection()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id","username","name","email","message","created_at"])
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, username, name, email, message, created_at FROM contact_messages")
+            for row in cursor.fetchall():
+                writer.writerow(row)
+        finally:
+            cursor.close()
+            conn.close()
+
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Disposition"] = "attachment; filename=contact_messages_export.csv"
+    resp.headers["Content-Type"] = "text/csv"
+    log_audit(session.get('username'), "Exported contact messages CSV", request.remote_addr)
+    return resp
+
 
 
 if __name__ == '__main__':

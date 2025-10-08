@@ -17,7 +17,6 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <!-- Placeholder profile (you’ll later dynamically load user image) -->
       <div class="profile-photo"></div>
     </div>
 
@@ -28,23 +27,33 @@
       <li><a href="{{ url_for('contact') }}"><i class="fa-solid fa-envelope"></i> Contact</a></li>
       <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
     </ul>
+
+    {% if session.get('role') == 'admin' %}
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 20px;">
+    <div style="padding: 0 18px; font-size: 0.85rem; color: #7fc8e8; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px;">Admin Panel</div>
+    <ul class="sidebar-menu">
+      <li><a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+      <li><a href="{{ url_for('admin_users_enhanced') }}"><i class="fa-solid fa-users-gear"></i> Users</a></li>
+      <li><a href="{{ url_for('admin_system') }}"><i class="fa-solid fa-sliders"></i> System Controls</a></li>
+    </ul>
+    {% endif %}
   </aside>
 
   <!-- Main Content Area -->
   <div class="main-content" id="mainContent">
-  <div class="center-wrapper">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-wrap">
-        {% for category, msg in messages %}
+    <div class="center-wrapper">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-wrap">
+          {% for category, msg in messages %}
           <div class="flash flash-{{ category }}">{{ msg }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-    {% block content %}{% endblock %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
   </div>
-</div>
 
   <script>
     const sidebarToggle = document.getElementById('sidebarToggle');
@@ -52,9 +61,9 @@
     const mainContent = document.getElementById('mainContent');
 
     sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');        // sidebar slides in/out
-        sidebarToggle.classList.toggle('active'); // toggle button state
-        mainContent.classList.toggle('shifted');  // shift main content
+      sidebar.classList.toggle('active');
+      sidebarToggle.classList.toggle('active');
+      mainContent.classList.toggle('shifted');
     });
   </script>
 </body>

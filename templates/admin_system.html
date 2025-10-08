@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="admin-container">
+  <a href="/" class="back-btn">Back to Dashboard</a>
+  <h2 class="admin-history-title">🛠️ System Controls & Maintenance</h2>
+
+  <!-- Top quick action cards -->
+  <div class="dashboard-cards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin:20px 0;">
+    <div class="stat-card gradient-blue">
+      <h4>Users</h4>
+      <div class="stat-value">{{ counts.users }}</div>
+      <div class="stat-sub">Total registered users</div>
+      <div style="margin-top:10px;">
+        <a class="btn secondary" href="{{ url_for('admin_export_users_csv') }}">⬇️ Export Users CSV</a>
+      </div>
+    </div>
+
+    <div class="stat-card gradient-green">
+      <h4>Predictions</h4>
+      <div class="stat-value">{{ counts.predictions }}</div>
+      <div class="stat-sub">Total model predictions</div>
+      <div style="margin-top:10px;">
+        <a class="btn secondary" href="{{ url_for('admin_export_predictions_csv') }}">⬇️ Export Predictions CSV</a>
+      </div>
+    </div>
+
+    <div class="stat-card gradient-purple">
+      <h4>Contact Messages</h4>
+      <div class="stat-value">{{ counts.contacts }}</div>
+      <div class="stat-sub">Messages from contact form</div>
+      <div style="margin-top:10px;">
+        <a class="btn secondary" href="{{ url_for('admin_export_contacts_csv') }}">⬇️ Export Messages CSV</a>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background:#fff; border:1px solid #eef2f7;">
+      <h4>System Logs</h4>
+      <div class="stat-value">{{ counts.audit }}</div>
+      <div class="stat-sub">Recent audit entries</div>
+      <div style="margin-top:10px;">
+        <a class="btn admin" href="{{ url_for('admin_system') }}">View Logs</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two column area -->
+  <div class="charts-row" style="display:grid; grid-template-columns: 1fr 560px; gap:18px; align-items:start;">
+
+    <!-- Contact messages card -->
+<div class="card contact-card">
+  <h3>📬 Contact Messages</h3>
+  <p class="muted">Recent messages submitted via the site contact form. Click Delete to remove an entry.</p>
+
+  {% if contact_messages %}
+  <div class="table-scroll">
+    <table class="table-adv wide-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Message</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in contact_messages %}
+        <tr>
+          <td>{{ m.id }}</td>
+          <td>{{ m.name }}{% if m.username %} <small class="muted">({{ m.username }})</small>{% endif %}</td>
+          <td>{{ m.email }}</td>
+          <td class="msg-cell">{{ m.message[:200] }}{% if m.message|length > 200 %}…{% endif %}</td>
+          <td>{{ m.created_at }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_delete_message', msg_id=m.id) }}" onsubmit="return confirm('Delete message from {{ m.name }}?');">
+              <button type="submit" class="btn danger small">🗑 Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="history-empty">No contact messages found.</p>
+  {% endif %}
+</div>
+
+<!-- Audit log card -->
+<div class="card audit-card">
+  <h3>🔐 Audit Log</h3>
+  <p class="muted">Recent admin actions and login-related events. Shows username, action, IP and timestamp.</p>
+
+  {% if audit_logs %}
+  <div class="table-scroll">
+    <table class="table-adv wide-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>IP</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in audit_logs %}
+        <tr>
+          <td>{{ a.created_at }}</td>
+          <td>{{ a.username or '—' }}</td>
+          <td>{{ a.action }}</td>
+          <td>{{ a.ip_address or '—' }}</td>
+          <td>{{ a.status or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="history-empty">No audit records found.</p>
+  {% endif %}
+</div>
+
+  </div>
+
+  <footer style="margin-top:22px;">© 2025 AI Disease Prediction | Admin System Controls</footer>
+</div>
+
+{% endblock %}
