@@ -3,7 +3,8 @@ import pickle
 import numpy as np
 import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import json
 import mysql.connector
 from mysql.connector import Error
 from remedies_v2 import remedy_dict_v2
@@ -660,19 +661,6 @@ def login():
             return "Invalid credentials"
     return render_template('login.html')
 
-# @app.route('/admin_users')
-# def admin_users():
-#     if 'username' not in session or session.get('role') != 'admin':
-#         return redirect(url_for('login'))
-
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-#     cursor.execute("SELECT id, username, role FROM users ORDER BY id ASC")
-#     users = cursor.fetchall()
-#     conn.close()
-
-#     return render_template('admin_users.html', users=users)
-
 @app.route('/admin/reset_password/<int:user_id>')
 def reset_password(user_id):
     if 'username' not in session or session.get('role') != 'admin':
@@ -1045,6 +1033,118 @@ def admin_export_users():
     response = Response(output.getvalue(), mimetype='text/csv')
     response.headers['Content-Disposition'] = 'attachment; filename=users_export.csv'
     return response
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    """
+    Admin analytics dashboard: summary cards, daily predictions (last 14 days),
+    top predicted diseases, user stats.
+    """
+    conn = get_db_connection()
+    # default safe values
+    total_users = 0
+    active_users = 0
+    total_predictions = 0
+    predictions_last_14 = []  # list of (date_str, count)
+    top_diseases = []  # list of (disease, count)
+
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+
+            # 1) users counts
+            cursor.execute("SELECT COUNT(*) AS cnt FROM users")
+            row = cursor.fetchone()
+            total_users = row['cnt'] if row else 0
+
+            cursor.execute("SELECT COUNT(*) AS cnt FROM users WHERE active = 1")
+            row = cursor.fetchone()
+            active_users = row['cnt'] if row else 0
+
+            # 2) total predictions (both tables)
+            # history uses `timestamp`, prediction_history uses `predicted_at`
+            cursor.execute("""
+                SELECT
+                  (SELECT COUNT(*) FROM history) + (SELECT COUNT(*) FROM prediction_history) AS total
+            """)
+            row = cursor.fetchone()
+            total_predictions = row['total'] if row else 0
+
+            # 3) daily predictions for last 14 days (merged from both tables)
+            # build date range
+            today = date.today()
+            start_dt = today - timedelta(days=13)  # 14 days inclusive
+            # Query: group by date over union
+            cursor.execute("""
+                SELECT d AS day, SUM(cnt) AS total
+                FROM (
+                  SELECT DATE(predicted_at) AS d, COUNT(*) AS cnt
+                  FROM prediction_history
+                  WHERE predicted_at >= %s
+                  GROUP BY DATE(predicted_at)
+                  UNION ALL
+                  SELECT DATE(timestamp) AS d, COUNT(*) AS cnt
+                  FROM history
+                  WHERE timestamp >= %s
+                  GROUP BY DATE(timestamp)
+                ) t
+                GROUP BY d
+                ORDER BY d ASC
+            """, (start_dt, start_dt))
+            rows = cursor.fetchall()
+            # Map row day->count
+            counts_map = { (r['day'].strftime('%Y-%m-%d') if isinstance(r['day'], (date,)) else str(r['day'])): r['total'] for r in rows }
+
+
+            # build full 14-day list (fill zeros)
+            predictions_last_14 = []
+            for i in range(14):
+                d = start_dt + timedelta(days=i)
+                ds = d.strftime('%Y-%m-%d')
+                predictions_last_14.append({'date': ds, 'count': int(counts_map.get(ds, 0))})
+
+            # 4) top predicted diseases (aggregate top_disease_1/2/3)
+            cursor.execute("""
+                SELECT disease, SUM(cnt) AS total
+                FROM (
+                  SELECT top_disease_1 AS disease, COUNT(*) AS cnt FROM prediction_history WHERE top_disease_1 IS NOT NULL GROUP BY top_disease_1
+                  UNION ALL
+                  SELECT top_disease_2 AS disease, COUNT(*) AS cnt FROM prediction_history WHERE top_disease_2 IS NOT NULL GROUP BY top_disease_2
+                  UNION ALL
+                  SELECT top_disease_3 AS disease, COUNT(*) AS cnt FROM prediction_history WHERE top_disease_3 IS NOT NULL GROUP BY top_disease_3
+                ) AS u
+                GROUP BY disease
+                ORDER BY total DESC
+                LIMIT 10
+            """)
+            rows = cursor.fetchall()
+            top_diseases = [{'disease': r['disease'], 'count': int(r['total'])} for r in rows if r['disease']]
+
+        except Exception as e:
+            print("[ADMIN DASHBOARD] DB error:", e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    # Prepare data for charts (JSON serializable)
+    chart_dates = [p['date'] for p in predictions_last_14]
+    chart_counts = [p['count'] for p in predictions_last_14]
+    top_labels = [td['disease'] for td in top_diseases]
+    top_counts = [td['count'] for td in top_diseases]
+
+    print("===DEBUG=== dates:", chart_dates)
+    print("===DEBUG=== counts:", chart_counts)
+
+    return render_template('admin_dashboard.html',
+                           total_users=total_users,
+                           active_users=active_users,
+                           total_predictions=total_predictions,
+                           chart_dates=json.dumps(chart_dates),
+                           chart_counts=json.dumps(chart_counts),
+                           top_labels=json.dumps(top_labels),
+                           top_counts=json.dumps(top_counts),
+                           top_diseases=top_diseases)
 
 
 if __name__ == '__main__':

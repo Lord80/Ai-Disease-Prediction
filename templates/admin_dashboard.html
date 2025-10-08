@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="admin-container">
+  <a href="/" class="back-btn">Back to Dashboard</a>
+  <h2 class="admin-history-title">📈 Admin Analytics Dashboard</h2>
+
+  <!-- Summary Cards -->
+  <div class="dashboard-cards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin:20px 0;">
+    <div class="stat-card gradient-blue">
+      <h4>Total Users</h4>
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-sub">Active: {{ active_users }}</div>
+    </div>
+    <div class="stat-card gradient-green">
+      <h4>Total Predictions</h4>
+      <div class="stat-value">{{ total_predictions }}</div>
+      <div class="stat-sub">Combined (history & v2)</div>
+    </div>
+    <div class="stat-card gradient-purple">
+      <h4>Top Disease (Last 10)</h4>
+      <div class="stat-value">{{ top_diseases[0].disease if top_diseases else '—' }}</div>
+      <div class="stat-sub">{{ top_diseases[0].count if top_diseases else '' }} predictions</div>
+    </div>
+    <div class="stat-card" style="background:#fff; border:1px solid #eef2f7;">
+      <h4>Quick Actions</h4>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+  <a class="btn admin" href="{{ url_for('admin_users_enhanced') }}">Manage Users</a>
+  <a class="btn secondary" href="{{ url_for('admin_export_users') }}">Export Users</a>
+</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row" style="display:grid; grid-template-columns: 1fr 520px; gap:18px; align-items:start;">
+    <div class="card" style="padding:18px;">
+      <h3>Daily Predictions (last 14 days)</h3>
+      <canvas id="dailyChart" height="220"></canvas>
+      <p class="muted" style="margin-top:8px;">Shows combined predictions per day from both models/history.</p>
+    </div>
+
+    <div class="card" style="padding:18px;">
+      <h3>Top Predicted Diseases</h3>
+      <canvas id="topDiseasesChart" height="220"></canvas>
+
+      <div style="margin-top:12px;">
+        <h4 style="margin:6px 0 8px;">Top list</h4>
+        <ol>
+          {% for td in top_diseases %}
+            <li>{{ td.disease }} — {{ td.count }}</li>
+          {% endfor %}
+          {% if not top_diseases %}
+            <li class="muted">No disease data available.</li>
+          {% endif %}
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <footer style="margin-top:22px;">© 2025 AI Disease Prediction | Admin Analytics</footer>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  (function(){
+    const dates = JSON.parse('{{ chart_dates|safe }}');
+    const counts = JSON.parse('{{ chart_counts|safe }}');
+    const topLabels = JSON.parse('{{ top_labels|safe }}');
+    const topCounts = JSON.parse('{{ top_counts|safe }}');
+
+    // DAILY Chart (line)
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    new Chart(dailyCtx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: 'Predictions',
+          data: counts,
+          tension: 0.25,
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 3,
+          backgroundColor: 'rgba(43, 128, 237, 0.12)',
+          borderColor: 'rgba(43, 128, 237, 1)',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { maxRotation: 0, autoSkip: true } },
+          y: { beginAtZero: true, precision: 0 }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // TOP DISEASES Chart (bar)
+    const topCtx = document.getElementById('topDiseasesChart').getContext('2d');
+    new Chart(topCtx, {
+      type: 'bar',
+      data: {
+        labels: topLabels,
+        datasets: [{
+          label: 'Predictions',
+          data: topCounts,
+          borderRadius: 6,
+          borderWidth: 0,
+          backgroundColor: 'rgba(77, 197, 150, 0.9)'
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { beginAtZero: true, precision: 0 },
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  })();
+</script>
+
+{% endblock %}
